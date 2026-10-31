@@ -14,6 +14,16 @@ export const LIMITS = {
   style: 120,
   notes: 500,
   message: 600,
+  priorities: 3,
+  ideaTitle: 80,
+  ideaText: 300,
+  // Saved per plan in localStorage. Lowering one later would make older saved plans fail
+  // validation and be dropped, so these only ever grow.
+  savedChat: 40,
+  savedChatText: 2000,
+  savedIdeas: 30,
+  // Earlier chat turns sent with each assistant request.
+  historyTurns: 6,
 } as const;
 
 // Control and format characters (including bidi overrides) never belong in user text.
@@ -25,8 +35,8 @@ export function cleanText(s: string): string {
 
 const text = (max: number) => z.string().transform(cleanText).pipe(z.string().max(max));
 
-export const isoDate = z.string().refine(isValidDate, "Enter a real date (yyyy-mm-dd).");
-export const timeOfDay = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Enter a time like 18:30.");
+const isoDate = z.string().refine(isValidDate, "Enter a real date (yyyy-mm-dd).");
+const timeOfDay = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Enter a time like 18:30.");
 
 export const EventInputSchema = z.object({
   type: z.enum(EVENT_TYPES),
@@ -39,8 +49,14 @@ export const EventInputSchema = z.object({
   budget: z.number().int().min(LIMITS.budget.min).max(LIMITS.budget.max),
   setting: z.enum(SETTINGS),
   venueBooked: z.boolean(),
-  priorities: z.array(z.enum(PRIORITIES)).max(3).refine((p) => new Set(p).size === p.length, "Priorities must be different."),
-  preferences: z.array(z.enum(PREFERENCES)).max(PREFERENCES.length).transform((p) => [...new Set(p)]),
+  priorities: z
+    .array(z.enum(PRIORITIES))
+    .max(LIMITS.priorities)
+    .refine((p) => new Set(p).size === p.length, "Priorities must be different."),
+  preferences: z
+    .array(z.enum(PREFERENCES))
+    .max(PREFERENCES.length)
+    .transform((p) => [...new Set(p)]),
   style: text(LIMITS.style),
   notes: text(LIMITS.notes),
 });

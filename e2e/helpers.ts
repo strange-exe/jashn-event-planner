@@ -42,6 +42,8 @@ export async function openSample(page: Page) {
 }
 
 export async function noHorizontalOverflow(page: Page) {
-  const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+  );
   expect(overflow, "page scrolls horizontally").toBe(false);
 }

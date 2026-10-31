@@ -32,7 +32,10 @@ function nextDay(iso: string): string {
 }
 
 export function planToIcs(plan: Plan, uid: string, stamp = new Date()): string {
-  const dtstamp = stamp.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  const dtstamp = stamp
+    .toISOString()
+    .replace(/[-:]/g, "")
+    .replace(/\.\d{3}/, "");
   const event = (id: string, date: string, summary: string, description: string) => [
     "BEGIN:VEVENT",
     `UID:${id}-${uid}@jashn`,
@@ -49,7 +52,9 @@ export function planToIcs(plan: Plan, uid: string, stamp = new Date()): string {
     "PRODID:-//Jashn//Event planner//EN",
     "CALSCALE:GREGORIAN",
     ...event("event", plan.input.date, plan.input.title, `${plan.input.city}, starts ${plan.input.startTime}`),
-    ...plan.tasks.filter((t) => t.phase !== "day-of").flatMap((t) => event(t.id, t.due, `${plan.input.title}: ${t.title}`, t.why)),
+    ...plan.tasks
+      .filter((t) => t.phase !== "day-of")
+      .flatMap((t) => event(t.id, t.due, `${plan.input.title}: ${t.title}`, t.why)),
     "END:VCALENDAR",
   ];
   return lines.map(fold).join("\r\n") + "\r\n";

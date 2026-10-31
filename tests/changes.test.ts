@@ -56,13 +56,19 @@ describe("applyChanges", () => {
   });
 
   it("describes a change in plain words", () => {
-    expect(describeChange({ op: "scaleBudget", percent: -20 }, makeInput())).toMatch(/^Cut the budget by 20% \(to .*16,00,000\)$/);
+    expect(describeChange({ op: "scaleBudget", percent: -20 }, makeInput())).toMatch(
+      /^Cut the budget by 20% \(to .*16,00,000\)$/,
+    );
   });
 });
 
 describe("toChange (model output)", () => {
   it("accepts a valid flat change", () => {
-    expect(toChange({ op: "setPreference", text: "kidsFriendly", flag: true })).toEqual({ op: "setPreference", key: "kidsFriendly", value: true });
+    expect(toChange({ op: "setPreference", text: "kidsFriendly", flag: true })).toEqual({
+      op: "setPreference",
+      key: "kidsFriendly",
+      value: true,
+    });
   });
 
   it("drops invalid or out-of-range changes", () => {

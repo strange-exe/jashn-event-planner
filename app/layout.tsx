@@ -7,7 +7,12 @@ import { NavLinks } from "@/components/NavLinks";
 import "./globals.css";
 
 const fraunces = Fraunces({ subsets: ["latin"], weight: ["500", "600"], display: "swap", variable: "--font-fraunces" });
-const source = Source_Sans_3({ subsets: ["latin"], weight: ["400", "600"], display: "swap", variable: "--font-source" });
+const source = Source_Sans_3({
+  subsets: ["latin"],
+  weight: ["400", "600"],
+  display: "swap",
+  variable: "--font-source",
+});
 
 export const metadata: Metadata = {
   title: { default: "Jashn: plan your celebration", template: "%s | Jashn" },

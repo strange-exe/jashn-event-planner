@@ -19,6 +19,7 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci --ignore-scripts
+      - run: npm run format:check
       - run: npm run lint
       - run: npm test
       # No API key in CI: the app uses the rule engine, so tests never call a model.

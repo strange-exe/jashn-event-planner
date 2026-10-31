@@ -3,15 +3,77 @@ import type { Budget, BudgetCategory, BudgetLine, EventInput, EventType, Priorit
 // Starting shares (percent of the total) for each kind of event. They are planning
 // heuristics, not market data; the README lists them as an assumption.
 export const BASE_SHARES: Record<EventType, Partial<Record<BudgetCategory, number>>> = {
-  wedding: { venue: 18, catering: 32, decor: 12, photography: 10, entertainment: 6, attire: 10, invitations: 2, favours: 2, logistics: 2, contingency: 6 },
-  engagement: { venue: 20, catering: 33, decor: 12, photography: 10, entertainment: 6, attire: 8, invitations: 2, favours: 3, contingency: 6 },
-  birthday: { venue: 18, catering: 35, decor: 14, photography: 6, entertainment: 12, invitations: 2, favours: 5, logistics: 2, contingency: 6 },
-  anniversary: { venue: 20, catering: 38, decor: 12, photography: 8, entertainment: 8, invitations: 2, favours: 4, logistics: 2, contingency: 6 },
-  community: { venue: 15, catering: 30, decor: 8, photography: 4, entertainment: 14, invitations: 5, logistics: 6, permits: 10, contingency: 8 },
-  festival: { venue: 10, catering: 30, decor: 18, photography: 4, entertainment: 12, invitations: 2, favours: 6, logistics: 4, permits: 6, contingency: 8 },
+  wedding: {
+    venue: 18,
+    catering: 32,
+    decor: 12,
+    photography: 10,
+    entertainment: 6,
+    attire: 10,
+    invitations: 2,
+    favours: 2,
+    logistics: 2,
+    contingency: 6,
+  },
+  engagement: {
+    venue: 20,
+    catering: 33,
+    decor: 12,
+    photography: 10,
+    entertainment: 6,
+    attire: 8,
+    invitations: 2,
+    favours: 3,
+    contingency: 6,
+  },
+  birthday: {
+    venue: 18,
+    catering: 35,
+    decor: 14,
+    photography: 6,
+    entertainment: 12,
+    invitations: 2,
+    favours: 5,
+    logistics: 2,
+    contingency: 6,
+  },
+  anniversary: {
+    venue: 20,
+    catering: 38,
+    decor: 12,
+    photography: 8,
+    entertainment: 8,
+    invitations: 2,
+    favours: 4,
+    logistics: 2,
+    contingency: 6,
+  },
+  community: {
+    venue: 15,
+    catering: 30,
+    decor: 8,
+    photography: 4,
+    entertainment: 14,
+    invitations: 5,
+    logistics: 6,
+    permits: 10,
+    contingency: 8,
+  },
+  festival: {
+    venue: 10,
+    catering: 30,
+    decor: 18,
+    photography: 4,
+    entertainment: 12,
+    invitations: 2,
+    favours: 6,
+    logistics: 4,
+    permits: 6,
+    contingency: 8,
+  },
 };
 
-export const PRIORITY_CATEGORY: Record<Priority, BudgetCategory> = {
+const PRIORITY_CATEGORY: Record<Priority, BudgetCategory> = {
   food: "catering",
   decor: "decor",
   photography: "photography",
@@ -21,10 +83,15 @@ export const PRIORITY_CATEGORY: Record<Priority, BudgetCategory> = {
 };
 
 /** Multipliers for the first, second and third priority. */
-const PRIORITY_BOOST = [1.3, 1.2, 1.1];
-const RANK = ["top", "second", "third"];
+const PRIORITY_BOOST = [
+  { rank: "top", factor: 1.3 },
+  { rank: "second", factor: 1.2 },
+  { rank: "third", factor: 1.1 },
+];
+// Share given to a priority category the event type has no base share for, before the boost.
+const UNLISTED_PRIORITY_SHARE = 4;
 
-export interface Weights {
+interface Weights {
   shares: Map<BudgetCategory, number>;
   reasons: Map<BudgetCategory, string[]>;
 }
@@ -34,7 +101,7 @@ function note(w: Weights, cat: BudgetCategory, reason: string) {
 }
 
 /** Decides how the budget should be split for this event, with a reason per change. */
-export function budgetWeights(input: EventInput): Weights {
+function budgetWeights(input: EventInput): Weights {
   const w: Weights = { shares: new Map(), reasons: new Map() };
   for (const [cat, share] of Object.entries(BASE_SHARES[input.type]) as [BudgetCategory, number][]) {
     w.shares.set(cat, share);
@@ -56,12 +123,17 @@ export function budgetWeights(input: EventInput): Weights {
     bump("contingency", 2, "Outdoor: extra buffer for weather.");
   }
 
-  input.priorities.slice(0, 3).forEach((p, i) => {
+  input.priorities.forEach((p, i) => {
+    const boost = PRIORITY_BOOST[i];
     const cat = PRIORITY_CATEGORY[p];
-    if (cat === "venue" && input.venueBooked) return;
-    const current = w.shares.get(cat) ?? 4;
-    w.shares.set(cat, current * PRIORITY_BOOST[i]);
-    note(w, cat, `You ranked ${p} as your ${RANK[i]} priority: share raised ${Math.round((PRIORITY_BOOST[i] - 1) * 100)}%.`);
+    if (!boost || (cat === "venue" && input.venueBooked)) return;
+    const current = w.shares.get(cat) ?? UNLISTED_PRIORITY_SHARE;
+    w.shares.set(cat, current * boost.factor);
+    note(
+      w,
+      cat,
+      `You ranked ${p} as your ${boost.rank} priority: share raised ${Math.round((boost.factor - 1) * 100)}%.`,
+    );
   });
 
   // Contingency keeps its share; everything else is rescaled to fill the rest.
@@ -87,22 +159,15 @@ export function splitExact(amount: number, shares: number[], unit: number): numb
   if (amount <= 0 || sum <= 0) return shares.map(() => 0);
   const units = Math.floor(amount / unit);
   const raw = shares.map((s) => (s / sum) * units);
-  const parts = raw.map(Math.floor);
-  let left = units - parts.reduce((a, b) => a + b, 0);
+  const left = units - raw.reduce((a, r) => a + Math.floor(r), 0);
+  // The `left` parts with the largest fractional remainders each get one more unit.
   const order = raw.map((r, i) => [r - Math.floor(r), i] as const).sort((a, b) => b[0] - a[0] || a[1] - b[1]);
-  for (const [, i] of order) {
-    if (left <= 0) break;
-    parts[i] += 1;
-    left -= 1;
-  }
-  const result = parts.map((p) => p * unit);
+  const bonus = new Set(order.slice(0, left).map(([, i]) => i));
+  const result = raw.map((r, i) => (Math.floor(r) + (bonus.has(i) ? 1 : 0)) * unit);
   // Sub-unit rupees (amount not a multiple of the unit) go to the largest part.
   const rest = amount - result.reduce((a, b) => a + b, 0);
-  if (rest !== 0) {
-    const biggest = result.indexOf(Math.max(...result));
-    result[biggest] += rest;
-  }
-  return result;
+  const biggest = result.indexOf(Math.max(...result));
+  return rest === 0 ? result : result.map((r, i) => (i === biggest ? r + rest : r));
 }
 
 export type Locks = Partial<Record<BudgetCategory, number>>;
@@ -128,13 +193,15 @@ export function buildBudget(input: EventInput, locks: Locks = {}): Budget {
 
   const lines: BudgetLine[] = cats.map((category) => {
     const isLocked = locks[category] !== undefined;
-    const amount = isLocked ? (locks[category] ?? 0) : parts[unlocked.indexOf(category)];
+    const amount = isLocked ? (locks[category] ?? 0) : (parts[unlocked.indexOf(category)] ?? 0);
     return {
       category,
       amount,
       percent: total > 0 ? Math.round((amount / total) * 1000) / 10 : 0,
       locked: isLocked,
-      reasons: isLocked ? ["You set this amount; other lines were rebalanced around it."] : (w.reasons.get(category) ?? []),
+      reasons: isLocked
+        ? ["You set this amount; other lines were rebalanced around it."]
+        : (w.reasons.get(category) ?? []),
     };
   });
   lines.sort((a, b) => (a.category === "contingency" ? 1 : b.category === "contingency" ? -1 : b.amount - a.amount));

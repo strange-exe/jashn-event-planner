@@ -26,30 +26,31 @@ assistant (Gemini) <── "cut budget by 10%" ──  user  ──>  ideas (Gem
 ```
 
 1. **Deterministic engine** (`lib/engine/`, pure TypeScript, no dependencies). The same input always gives the same plan.
-   - *Budget* (`budget.ts`) starts from typical shares for the event type. It then adjusts for context:
+   - _Budget_ (`budget.ts`) starts from typical shares for the event type. It then adjusts for context:
      - outdoor events add a tent, power and a weather buffer;
      - your top three priorities get +30%, +20% and +10%;
      - an already-booked venue is removed from the budget;
      - contingency is never cut.
 
      A largest-remainder split makes the lines sum **exactly** to the total. Lines you edit are locked and the others rebalance. If your locked lines exceed the total, the overspend is reported, never hidden.
-   - *Timeline* (`timeline.ts`) scales wedding-length lead times by event type. When the date is close, an **order-preserving** mapping squeezes long-lead tasks into the time left, so "book the venue" never lands after "chase RSVPs". Each task is marked "pulled forward" when that happens.
-   - *Vendors and quantities* (`vendors.ts`) are chosen from context: a baker for birthdays, a tent and generator for outdoor events, security and sanitation for large public events, and extra questions for vegetarian, eco-friendly or step-free needs. Booking deadlines come from the matching timeline task.
-   - *Flags* (`insights.ts`) are small, readable rules, each with a suggestion. Examples: food budget per guest against typical cost by city size, the monsoon (June to September), peak wedding season, music after 10 pm (Noise Pollution Rules, 2000), large crowds, overspend.
+
+   - _Timeline_ (`timeline.ts`) scales wedding-length lead times by event type. When the date is close, an **order-preserving** mapping squeezes long-lead tasks into the time left, so "book the venue" never lands after "chase RSVPs". Each task is marked "pulled forward" when that happens.
+   - _Vendors and quantities_ (`vendors.ts`) are chosen from context: a baker for birthdays, a tent and generator for outdoor events, security and sanitation for large public events, and extra questions for vegetarian, eco-friendly or step-free needs. Booking deadlines come from the matching timeline task.
+   - _Flags_ (`insights.ts`) are small, readable rules, each with a suggestion. Examples: food budget per guest against typical cost by city size, the monsoon (June to September), peak wedding season, music after 10 pm (Noise Pollution Rules, 2000), large crowds, overspend.
 2. **GenAI layer** (`lib/ai/`, Gemini through `@google/genai`).
-   - The **assistant** receives the event details and a plan summary. It returns structured JSON: a reply plus *changes to the event details* (for example `scaleBudget -10`), never new numbers. Each change is validated with Zod against strict limits and shown in plain words. It is applied only when the user presses **Apply**, and then the engine recomputes everything.
+   - The **assistant** receives the event details and a plan summary. It returns structured JSON: a reply plus _changes to the event details_ (for example `scaleBudget -10`), never new numbers. Each change is validated with Zod against strict limits and shown in plain words. It is applied only when the user presses **Apply**, and then the engine recomputes everything.
    - **Ideas** are generated to fit the guest count, budget per guest, setting, style and every stated preference.
    - **Fallbacks:** without an API key, or if the model fails, the assistant uses a built-in parser for common requests (`intent.ts`) and ideas come from a curated list. The app works fully offline, and the UI says which source answered.
 
 ## How the solution works
 
-| Route | Purpose |
-|---|---|
-| `/` | What it does, with a live sample plan computed by the engine |
-| `/plan/new` | Three-step form: occasion, when and where, then guests, budget, priorities and preferences. It shows live per-guest cost and inline validation |
-| `/plans/[id]` | Dashboard with tabs for Overview, Budget, Timeline (plus a run sheet for the day), Vendors and Ideas, and the assistant beside them. Also calendar export (.ics), print, edit and delete |
-| `/plans` | Saved plans |
-| `POST /api/assistant`, `POST /api/ideas` | Server routes that hold the API key, validate input and rate-limit |
+| Route                                    | Purpose                                                                                                                                                                                  |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/`                                      | What it does, with a live sample plan computed by the engine                                                                                                                             |
+| `/plan/new`                              | Three-step form: occasion, when and where, then guests, budget, priorities and preferences. It shows live per-guest cost and inline validation                                           |
+| `/plans/[id]`                            | Dashboard with tabs for Overview, Budget, Timeline (plus a run sheet for the day), Vendors and Ideas, and the assistant beside them. Also calendar export (.ics), print, edit and delete |
+| `/plans`                                 | Saved plans                                                                                                                                                                              |
+| `POST /api/assistant`, `POST /api/ideas` | Server routes that hold the API key, validate input and rate-limit                                                                                                                       |
 
 Plans are stored in the browser's `localStorage`, so there is no account and no database.
 
@@ -94,9 +95,11 @@ npm run dev                  # http://localhost:3000
 ## Tests
 
 ```bash
-npm test            # 72 unit tests: budget maths, timeline squeeze, vendors, flags, intent parser, validation, AI fallbacks with a fake model, rate limiting, .ics
+npm test            # 80 unit tests: budget maths, timeline squeeze, vendors, flags, intent parser, validation, wizard drafts, API client, AI fallbacks with a fake model, rate limiting, .ics
 npm run test:e2e    # Playwright (production build): flows, axe in light/dark at 390 and 1440 px, CSP and API hardening, XSS payloads (Chromium, Firefox, WebKit)
 npm run lint        # ESLint, zero warnings
+npm run format:check  # Prettier
+npm run check       # all of the above plus the production build
 npm run typecheck
 ```
 

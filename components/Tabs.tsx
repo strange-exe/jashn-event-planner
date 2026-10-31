@@ -22,11 +22,19 @@ export function Tabs({ tabs, label }: { tabs: TabDef[]; label: string }) {
   function onKey(e: KeyboardEvent) {
     const last = tabs.length - 1;
     const next =
-      e.key === "ArrowRight" ? (active === last ? 0 : active + 1)
-      : e.key === "ArrowLeft" ? (active === 0 ? last : active - 1)
-      : e.key === "Home" ? 0
-      : e.key === "End" ? last
-      : null;
+      e.key === "ArrowRight"
+        ? active === last
+          ? 0
+          : active + 1
+        : e.key === "ArrowLeft"
+          ? active === 0
+            ? last
+            : active - 1
+          : e.key === "Home"
+            ? 0
+            : e.key === "End"
+              ? last
+              : null;
     if (next === null) return;
     e.preventDefault();
     setActive(next);

@@ -8,10 +8,20 @@ const limiter = createRateLimiter(Number(process.env.RATE_LIMIT_PER_MINUTE) || 1
 export function jsonRoute<S extends z.ZodType>(schema: S, handle: (body: z.infer<S>) => Promise<unknown>) {
   return async (req: Request): Promise<Response> => {
     const rate = limiter(clientKey(req));
-    if (!rate.ok) return json({ error: "Too many requests. Try again in a minute." }, 429, { "Retry-After": String(rate.retryAfter) });
+    if (!rate.ok)
+      return json({ error: "Too many requests. Try again in a minute." }, 429, {
+        "Retry-After": String(rate.retryAfter),
+      });
     try {
       const parsed = schema.safeParse(await readJson(req));
-      if (!parsed.success) return json({ error: "Some details are invalid.", issues: parsed.error.issues.map((i) => ({ path: i.path.join("."), message: i.message })) }, 400);
+      if (!parsed.success)
+        return json(
+          {
+            error: "Some details are invalid.",
+            issues: parsed.error.issues.map((i) => ({ path: i.path.join("."), message: i.message })),
+          },
+          400,
+        );
       return json(await handle(parsed.data));
     } catch (e) {
       if (e instanceof HttpError) return json({ error: e.message }, e.status);

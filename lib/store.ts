@@ -3,8 +3,8 @@
 import { useSyncExternalStore } from "react";
 import { z } from "zod";
 import { BUDGET_CATEGORIES, type EventInput } from "./engine/types";
-import { IDEA_CATEGORIES } from "./ideas";
-import { EventInputSchema } from "./schema";
+import { IdeaSchema } from "./ideas";
+import { EventInputSchema, LIMITS } from "./schema";
 
 // Plans live in this browser's localStorage, so there is no account or database
 // and nothing personal leaves the device except what is sent to the assistant.
@@ -12,8 +12,8 @@ import { EventInputSchema } from "./schema";
 const KEY = "jashn.plans.v1";
 const MAX_PLANS = 30;
 
-const ChatSchema = z.object({ role: z.enum(["user", "assistant"]), text: z.string().max(2000) });
-const IdeaSchema = z.object({ title: z.string().max(80), category: z.enum(IDEA_CATEGORIES), description: z.string().max(300), cost: z.enum(["low", "medium", "high"]) });
+const ChatSchema = z.object({ role: z.enum(["user", "assistant"]), text: z.string().max(LIMITS.savedChatText) });
+export type ChatMessage = z.infer<typeof ChatSchema>;
 
 const SavedPlanSchema = z.object({
   id: z.string().regex(/^[a-z0-9-]{8,40}$/),
@@ -21,8 +21,8 @@ const SavedPlanSchema = z.object({
   locks: z.partialRecord(z.enum(BUDGET_CATEGORIES), z.number().int().min(0)).default({}),
   done: z.record(z.string(), z.boolean()).default({}),
   booked: z.record(z.string(), z.boolean()).default({}),
-  ideas: z.array(IdeaSchema).max(30).default([]),
-  chat: z.array(ChatSchema).max(40).default([]),
+  ideas: z.array(IdeaSchema).max(LIMITS.savedIdeas).default([]),
+  chat: z.array(ChatSchema).max(LIMITS.savedChat).default([]),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
@@ -85,7 +85,17 @@ export function usePlan(id: string): SavedPlan | undefined | null {
 
 export function createPlan(input: EventInput): SavedPlan {
   const now = new Date().toISOString();
-  const plan: SavedPlan = { id: crypto.randomUUID(), input, locks: {}, done: {}, booked: {}, ideas: [], chat: [], createdAt: now, updatedAt: now };
+  const plan: SavedPlan = {
+    id: crypto.randomUUID(),
+    input,
+    locks: {},
+    done: {},
+    booked: {},
+    ideas: [],
+    chat: [],
+    createdAt: now,
+    updatedAt: now,
+  };
   write([plan, ...read()]);
   return plan;
 }

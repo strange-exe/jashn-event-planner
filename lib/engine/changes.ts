@@ -11,7 +11,10 @@ export function applyChanges(input: EventInput, changes: Change[]): EventInput {
       case "setBudget":
         return { ...acc, budget: c.value };
       case "scaleBudget":
-        return { ...acc, budget: clamp(Math.round((acc.budget * (100 + c.percent)) / 100), LIMITS.budget.min, LIMITS.budget.max) };
+        return {
+          ...acc,
+          budget: clamp(Math.round((acc.budget * (100 + c.percent)) / 100), LIMITS.budget.min, LIMITS.budget.max),
+        };
       case "setGuests":
         return { ...acc, guests: c.value };
       case "addGuests":

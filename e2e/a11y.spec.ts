@@ -83,6 +83,7 @@ test("favicon and apple-touch-icon exist and match their declared format", async
     expect(res.status(), icon.href).toBe(200);
     const body = await res.body();
     if (icon.href.endsWith(".svg")) expect(body.subarray(0, 200).toString("utf8")).toContain("<svg");
-    else expect(body.subarray(0, 4).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47])), `${icon.href} is not a PNG`).toBe(true);
+    else
+      expect(body.subarray(0, 4).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47])), `${icon.href} is not a PNG`).toBe(true);
   }
 });

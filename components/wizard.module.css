@@ -1,17 +1,84 @@
-.wrap { max-width: 760px; margin: 0 auto; padding-top: var(--space-6); display: grid; gap: var(--space-5); }
-.progress { list-style: none; margin: 0; padding: 0; display: flex; gap: var(--space-4); flex-wrap: wrap; font-size: var(--step--1); color: var(--muted); }
-.progress li { display: flex; align-items: center; gap: var(--space-2); }
-.progress li[aria-current="step"] { color: var(--text); font-weight: 600; }
-.dot { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--border-strong); font-weight: 600; }
-.dot svg { width: 14px; height: 14px; }
-.progress li[aria-current="step"] .dot { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); }
-.done .dot { background: var(--accent-soft); border-color: var(--accent-soft); color: var(--text); }
-.form { gap: var(--space-5); }
-.heading { font-size: var(--step-3); }
-.heading:focus { outline: none; }
-.heading:focus-visible { outline: 3px solid var(--focus); }
-.two { display: grid; gap: var(--space-4); }
-@media (min-width: 560px) { .two { grid-template-columns: 1fr 1fr; } }
-.live { padding: var(--space-3) var(--space-4); border-radius: var(--radius-control); background: var(--surface-2); }
-.rank { font-size: 12px; font-weight: 700; line-height: 1; }
-.actions { padding-top: var(--space-4); border-top: 1px solid var(--border); }
+.wrap {
+  max-width: 760px;
+  margin: 0 auto;
+  padding-top: var(--space-6);
+  display: grid;
+  gap: var(--space-5);
+}
+.progress {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  font-size: var(--step--1);
+  color: var(--muted);
+}
+.progress li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.progress li[aria-current="step"] {
+  color: var(--text);
+  font-weight: 600;
+}
+.dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border-strong);
+  font-weight: 600;
+}
+.dot svg {
+  width: 14px;
+  height: 14px;
+}
+.progress li[aria-current="step"] .dot {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-contrast);
+}
+.done .dot {
+  background: var(--accent-soft);
+  border-color: var(--accent-soft);
+  color: var(--text);
+}
+.form {
+  gap: var(--space-5);
+}
+.heading {
+  font-size: var(--step-3);
+}
+.heading:focus {
+  outline: none;
+}
+.heading:focus-visible {
+  outline: 3px solid var(--focus);
+}
+.two {
+  display: grid;
+  gap: var(--space-4);
+}
+@media (min-width: 560px) {
+  .two {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.live {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-control);
+  background: var(--surface-2);
+}
+.rank {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+.actions {
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}

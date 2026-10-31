@@ -3,7 +3,7 @@
 
 const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
 const plain = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 });
-export const RUPEE = String.fromCodePoint(0x20b9);
+const RUPEE = String.fromCodePoint(0x20b9);
 
 export function formatINR(amount: number): string {
   return inr.format(Math.round(amount));
@@ -43,8 +43,9 @@ const UNITS: Record<string, number> = {
 export function parseAmount(text: string): number | null {
   const m = /(\d[\d,]*(?:\.\d+)?)\s*(k|thousand|lakhs?|lacs?|l|crores?|cr)?\b/i.exec(text);
   if (!m) return null;
-  const n = Number(m[1].replace(/,/g, ""));
+  const [, digits = "", suffix] = m;
+  const n = Number(digits.replace(/,/g, ""));
   if (!Number.isFinite(n)) return null;
-  const unit = m[2] ? UNITS[m[2].toLowerCase()] : 1;
+  const unit = suffix ? (UNITS[suffix.toLowerCase()] ?? 1) : 1;
   return Math.round(n * unit);
 }

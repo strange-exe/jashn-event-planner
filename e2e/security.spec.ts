@@ -16,7 +16,8 @@ test("pages send a nonce-based CSP and hardening headers", async ({ request }) =
 
 test("every script tag carries the nonce", async ({ page }) => {
   const res = await page.goto("/");
-  const nonce = /'nonce-([^']+)'/.exec(res!.headers()["content-security-policy"])![1];
+  const nonce = /'nonce-([^']+)'/.exec(res?.headers()["content-security-policy"] ?? "")?.[1];
+  expect(nonce).toBeTruthy();
   const scripts = await page.$$eval("script", (els) => els.map((s) => s.nonce));
   expect(scripts.length).toBeGreaterThan(0);
   expect(scripts.every((n) => n === nonce)).toBe(true);

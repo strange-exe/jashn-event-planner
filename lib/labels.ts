@@ -1,4 +1,14 @@
-import type { BudgetCategory, CityTier, EventType, Phase, Preference, Priority, Setting, Severity } from "./engine/types";
+import type {
+  BudgetCategory,
+  CityTier,
+  EventType,
+  Phase,
+  Preference,
+  Priority,
+  Setting,
+  Severity,
+} from "./engine/types";
+import type { IdeaCategory } from "./ideas";
 
 export const EVENT_LABEL: Record<EventType, { name: string; hint: string }> = {
   wedding: { name: "Wedding", hint: "Ceremony, reception and family functions" },
@@ -56,9 +66,24 @@ export const PHASE_LABEL: Record<Phase, string> = {
   "day-of": "The day",
 };
 
+export const IDEA_CATEGORY_LABEL: Record<IdeaCategory, string> = {
+  decor: "Decor",
+  food: "Food",
+  entertainment: "Entertainment",
+  "guest-experience": "Guest experience",
+  keepsakes: "Keepsakes",
+  tradition: "Tradition",
+};
+
 export const SEVERITY_LABEL: Record<Severity, string> = { critical: "Critical", warning: "Warning", info: "Note" };
 
-const dateFmt = new Intl.DateTimeFormat("en-IN", { weekday: "short", day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+const dateFmt = new Intl.DateTimeFormat("en-IN", {
+  weekday: "short",
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+  timeZone: "UTC",
+});
 
 export function formatDate(iso: string): string {
   return dateFmt.format(new Date(`${iso}T00:00:00Z`));

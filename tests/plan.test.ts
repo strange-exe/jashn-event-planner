@@ -22,10 +22,9 @@ describe("timeline", () => {
       for (const t of tasks) {
         expect(t.due >= TODAY && t.due <= date).toBe(true);
       }
-      const byLead = [...tasks].sort((a, b) => b.idealLeadDays - a.idealLeadDays);
-      for (let i = 1; i < byLead.length; i++) {
-        expect(byLead[i].due >= byLead[i - 1].due).toBe(true);
-      }
+      // Longest lead first must also mean earliest due date first (ISO dates sort as text).
+      const dues = [...tasks].sort((a, b) => b.idealLeadDays - a.idealLeadDays).map((t) => t.due);
+      expect(dues).toEqual([...dues].sort());
     }
   });
 
@@ -40,7 +39,9 @@ describe("timeline", () => {
     expect(plain).not.toContain("permits");
     expect(plain).not.toContain("tent");
     expect(plain).not.toContain("attire");
-    const outdoorCommunity = ids(buildTasks(makeInput({ type: "community", setting: "outdoor", venueBooked: true }), TODAY, 160));
+    const outdoorCommunity = ids(
+      buildTasks(makeInput({ type: "community", setting: "outdoor", venueBooked: true }), TODAY, 160),
+    );
     expect(outdoorCommunity).toEqual(expect.arrayContaining(["permits", "tent", "venue-confirm"]));
     expect(outdoorCommunity).not.toContain("venue");
   });
@@ -64,7 +65,9 @@ describe("buildPlan", () => {
     expect(kids.vendors.find((v) => v.id === "entertainment")?.questions[0]).toMatch(/children's entertainer/);
     const eco = buildPlan(makeInput({ preferences: ["ecoFriendly", "vegetarianOnly"] }), TODAY);
     expect(ids(eco.vendors)).toContain("sanitation");
-    expect(eco.vendors.find((v) => v.id === "caterer")?.questions.join(" ")).toMatch(/vegetarian.*food bank|food bank/s);
+    expect(eco.vendors.find((v) => v.id === "caterer")?.questions.join(" ")).toMatch(
+      /vegetarian.*food bank|food bank/s,
+    );
   });
 
   it("derives logistics from the headcount", () => {
@@ -98,7 +101,10 @@ describe("buildPlan", () => {
 
   it("sorts insights by severity", () => {
     const order = { critical: 0, warning: 1, info: 2 };
-    const plan = buildPlan(makeInput({ guests: 600, budget: 400_000, setting: "outdoor", date: "2027-01-20", venueBooked: true }), TODAY);
+    const plan = buildPlan(
+      makeInput({ guests: 600, budget: 400_000, setting: "outdoor", date: "2027-01-20", venueBooked: true }),
+      TODAY,
+    );
     const ranks = plan.insights.map((i) => order[i.severity]);
     expect(ranks).toEqual([...ranks].sort());
   });

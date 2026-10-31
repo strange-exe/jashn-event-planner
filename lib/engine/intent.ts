@@ -38,10 +38,14 @@ export function parseIntent(message: string): Change[] {
   const t = message.toLowerCase();
   const out: unknown[] = [];
 
-  const pct = /\b(cut|reduce|lower|decrease|trim|increase|raise|grow)\b[^%\d]*\bbudget\b\D*?(\d+(?:\.\d+)?)\s*(%|percent)/.exec(t);
+  const pct =
+    /\b(cut|reduce|lower|decrease|trim|increase|raise|grow)\b[^%\d]*\bbudget\b\D*?(\d+(?:\.\d+)?)\s*(%|percent)/.exec(
+      t,
+    );
   if (pct) {
-    const down = /cut|reduce|lower|decrease|trim/.test(pct[1]);
-    out.push({ op: "scaleBudget", percent: Number(pct[2]) * (down ? -1 : 1) });
+    const [, verb = "", value] = pct;
+    const down = /cut|reduce|lower|decrease|trim/.test(verb);
+    out.push({ op: "scaleBudget", percent: Number(value) * (down ? -1 : 1) });
   } else if (/\bbudget\b/.test(t)) {
     const after = t.slice(t.indexOf("budget"));
     const amount = parseAmount(after);

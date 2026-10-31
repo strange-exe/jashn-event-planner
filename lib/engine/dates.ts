@@ -4,7 +4,7 @@
 const DAY_MS = 86_400_000;
 const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
 
-export function parseDate(iso: string): Date {
+function parseDate(iso: string): Date {
   const m = ISO_DATE.exec(iso);
   if (!m) throw new Error(`Invalid date: ${iso}`);
   const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
@@ -21,7 +21,7 @@ export function isValidDate(iso: string): boolean {
   }
 }
 
-export function toISO(d: Date): string {
+function toISO(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
@@ -46,7 +46,7 @@ export function monthOf(iso: string): number {
 
 /** Adds minutes to an HH:mm time and wraps past midnight. */
 export function addMinutes(time: string, minutes: number): string {
-  const [h, m] = time.split(":").map(Number);
+  const [h = 0, m = 0] = time.split(":").map(Number);
   const total = (((h * 60 + m + minutes) % 1440) + 1440) % 1440;
   return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
 }

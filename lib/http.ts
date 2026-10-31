@@ -30,11 +30,14 @@ export function json(data: unknown, status = 200, headers: Record<string, string
  * Fixed-window limiter kept in memory. On serverless hosts each instance has its
  * own window, so it blunts bursts rather than enforcing a hard global cap.
  */
+// Past this many tracked clients, expired windows are swept so memory stays bounded.
+const MAX_TRACKED_CLIENTS = 5_000;
+
 export function createRateLimiter(limit: number, windowMs: number, now: () => number = Date.now) {
   const hits = new Map<string, { count: number; resetAt: number }>();
   return (key: string): { ok: boolean; retryAfter: number } => {
     const t = now();
-    if (hits.size > 5_000) {
+    if (hits.size > MAX_TRACKED_CLIENTS) {
       for (const [k, v] of hits) if (v.resetAt <= t) hits.delete(k);
     }
     const entry = hits.get(key);
@@ -43,7 +46,9 @@ export function createRateLimiter(limit: number, windowMs: number, now: () => nu
       return { ok: true, retryAfter: 0 };
     }
     entry.count += 1;
-    return entry.count <= limit ? { ok: true, retryAfter: 0 } : { ok: false, retryAfter: Math.ceil((entry.resetAt - t) / 1000) };
+    return entry.count <= limit
+      ? { ok: true, retryAfter: 0 }
+      : { ok: false, retryAfter: Math.ceil((entry.resetAt - t) / 1000) };
   };
 }
 

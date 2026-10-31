@@ -9,9 +9,18 @@ import { sampleWedding } from "@/lib/sample";
 import styles from "./home.module.css";
 
 const STEPS = [
-  { title: "Tell us about the event", body: "Occasion, date, city, guests, budget and what matters most. About two minutes." },
-  { title: "Get a plan that adds up", body: "A budget split to the rupee, a dated timeline, the vendors you need and what to ask them." },
-  { title: "Adjust it in plain words", body: 'Say "cut the budget by 15%" or "make it eco-friendly". The assistant proposes changes and you approve them.' },
+  {
+    title: "Tell us about the event",
+    body: "Occasion, date, city, guests, budget and what matters most. About two minutes.",
+  },
+  {
+    title: "Get a plan that adds up",
+    body: "A budget split to the rupee, a dated timeline, the vendors you need and what to ask them.",
+  },
+  {
+    title: "Adjust it in plain words",
+    body: 'Say "cut the budget by 15%" or "make it eco-friendly". The assistant proposes changes and you approve them.',
+  },
 ];
 
 export default function Home() {
@@ -27,8 +36,8 @@ export default function Home() {
             Plan the whole celebration in one evening
           </h1>
           <p className={styles.lede}>
-            Weddings, birthdays and community events. Tell Jashn the occasion, guests and budget, and get a budget that adds up,
-            a dated timeline, a vendor checklist and ideas made for your family.
+            Weddings, birthdays and community events. Tell Jashn the occasion, guests and budget, and get a budget that
+            adds up, a dated timeline, a vendor checklist and ideas made for your family.
           </p>
           <div className="row">
             <Link href="/plan/new" className="btn btn-primary">
@@ -85,8 +94,8 @@ export default function Home() {
           ))}
         </ol>
         <p className={styles.trust}>
-          The numbers come from transparent rules you can read, with a reason beside every line. Gemini adds personal ideas and
-          understands your requests, and nothing it suggests changes your plan until you approve it.
+          The numbers come from transparent rules you can read, with a reason beside every line. Gemini adds personal
+          ideas and understands your requests, and nothing it suggests changes your plan until you approve it.
         </p>
       </section>
     </div>

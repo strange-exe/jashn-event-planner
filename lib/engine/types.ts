@@ -1,14 +1,7 @@
 // Shared types for the planning engine. Everything here is plain data so a plan
 // can be stored in localStorage, sent to the assistant, and rebuilt deterministically.
 
-export const EVENT_TYPES = [
-  "wedding",
-  "engagement",
-  "birthday",
-  "anniversary",
-  "community",
-  "festival",
-] as const;
+export const EVENT_TYPES = ["wedding", "engagement", "birthday", "anniversary", "community", "festival"] as const;
 export type EventType = (typeof EVENT_TYPES)[number];
 
 export const CITY_TIERS = ["metro", "large", "town"] as const;
@@ -17,23 +10,10 @@ export type CityTier = (typeof CITY_TIERS)[number];
 export const SETTINGS = ["indoor", "outdoor", "either"] as const;
 export type Setting = (typeof SETTINGS)[number];
 
-export const PRIORITIES = [
-  "food",
-  "decor",
-  "photography",
-  "entertainment",
-  "venue",
-  "attire",
-] as const;
+export const PRIORITIES = ["food", "decor", "photography", "entertainment", "venue", "attire"] as const;
 export type Priority = (typeof PRIORITIES)[number];
 
-export const PREFERENCES = [
-  "vegetarianOnly",
-  "alcoholFree",
-  "ecoFriendly",
-  "stepFreeAccess",
-  "kidsFriendly",
-] as const;
+export const PREFERENCES = ["vegetarianOnly", "alcoholFree", "ecoFriendly", "stepFreeAccess", "kidsFriendly"] as const;
 export type Preference = (typeof PREFERENCES)[number];
 
 export interface EventInput {

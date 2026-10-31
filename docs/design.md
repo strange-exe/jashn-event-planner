@@ -8,13 +8,13 @@ Style traits borrowed (not brand identity) from the awesome-design-md library (V
 
 All colours are semantic tokens in `app/globals.css`, with separate light and dark values (`prefers-color-scheme`). Components never use raw colours.
 
-| Token | Light | Dark | Role |
-|---|---|---|---|
-| `--bg` | #fffcf7 | #191613 | Page |
-| `--surface` | #ffffff | #231f1b | Cards, panels |
-| `--text` | #22201c | #f5efe6 | Body text |
-| `--muted` | #5f584e | #bdb3a6 | Secondary text |
-| `--accent` | #b9400b | #f59a52 | Primary action only |
+| Token                                             | Light   | Dark    | Role                                  |
+| ------------------------------------------------- | ------- | ------- | ------------------------------------- |
+| `--bg`                                            | #fffcf7 | #191613 | Page                                  |
+| `--surface`                                       | #ffffff | #231f1b | Cards, panels                         |
+| `--text`                                          | #22201c | #f5efe6 | Body text                             |
+| `--muted`                                         | #5f584e | #bdb3a6 | Secondary text                        |
+| `--accent`                                        | #b9400b | #f59a52 | Primary action only                   |
 | `--danger` / `--warning` / `--success` / `--info` | see CSS | see CSS | Status, always with an icon and words |
 
 Contrast is checked by `e2e/a11y.spec.ts` (axe, light and dark), and every text pair is at least 4.5:1.

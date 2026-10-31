@@ -4,8 +4,12 @@ import { z } from "zod";
 // Server-only: imported by API routes, never by client components, so the key
 // never reaches the browser.
 
-export const DEFAULT_MODELS = ["gemini-3.8-flash", "gemini-3.5-flash-lite"];
+const DEFAULT_MODELS = ["gemini-3.8-flash", "gemini-3.5-flash-lite"];
 const TIMEOUT_MS = 20_000;
+// Some variety for ideas without drifting from the JSON schema.
+const TEMPERATURE = 0.7;
+// Ten ideas or a reply with six changes fit well inside this.
+const MAX_OUTPUT_TOKENS = 4096;
 
 export class AiUnavailableError extends Error {}
 
@@ -34,7 +38,9 @@ export function aiConfigured(): boolean {
 }
 
 function models(): string[] {
-  const fromEnv = process.env.GEMINI_MODELS?.split(",").map((m) => m.trim()).filter(Boolean);
+  const fromEnv = process.env.GEMINI_MODELS?.split(",")
+    .map((m) => m.trim())
+    .filter(Boolean);
   return fromEnv?.length ? fromEnv : DEFAULT_MODELS;
 }
 
@@ -60,8 +66,8 @@ export async function generateJson<T>(
           systemInstruction: system,
           responseMimeType: "application/json",
           responseJsonSchema: jsonSchema,
-          temperature: 0.7,
-          maxOutputTokens: 4096,
+          temperature: TEMPERATURE,
+          maxOutputTokens: MAX_OUTPUT_TOKENS,
           abortSignal: AbortSignal.timeout(TIMEOUT_MS),
         },
       });

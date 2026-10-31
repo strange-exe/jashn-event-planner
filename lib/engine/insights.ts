@@ -23,6 +23,12 @@ const RUSH_DAYS: Record<EventType, number> = {
   festival: 7,
 };
 
+// Food budget per guest as a share of the typical plate cost: below LOW is critical,
+// below TIGHT is a warning. Trimming the list aims for TIGHT, so food is still modest.
+const CATERING_LOW_RATIO = 0.7;
+const CATERING_TIGHT_RATIO = 0.9;
+// Above this headcount an outdoor or public event needs crowd planning.
+const LARGE_CROWD_GUESTS = 500;
 const MONSOON = new Set([6, 7, 8, 9]);
 const WEDDING_SEASON = new Set([11, 12, 1, 2]);
 
@@ -54,16 +60,16 @@ const RULES: Rule[] = [
     const perPlate = catering / input.guests;
     const typical = PLATE_COST[input.type][input.cityTier];
     const ratio = perPlate / typical;
-    if (ratio < 0.7) {
+    if (ratio < CATERING_LOW_RATIO) {
       return {
         id: "catering-low",
         severity: "critical",
         title: `Food budget is about ${formatINR(perPlate)} per guest`,
         detail: `A typical ${input.type} in a ${input.cityTier === "town" ? "town" : `${input.cityTier} city`} costs around ${formatINR(typical)} per guest for food.`,
-        suggestion: `Trim the guest list to about ${Math.floor(catering / (typical * 0.9))}, choose a simpler menu, or raise the budget.`,
+        suggestion: `Trim the guest list to about ${Math.floor(catering / (typical * CATERING_TIGHT_RATIO))}, choose a simpler menu, or raise the budget.`,
       };
     }
-    if (ratio < 0.9) {
+    if (ratio < CATERING_TIGHT_RATIO) {
       return {
         id: "catering-tight",
         severity: "warning",
@@ -128,13 +134,14 @@ const RULES: Rule[] = [
       id: "noise",
       severity: "warning",
       title: "Music may run past 10 pm",
-      detail: "India's Noise Pollution Rules, 2000 restrict loudspeakers between 10 pm and 6 am unless local authorities allow it.",
+      detail:
+        "India's Noise Pollution Rules, 2000 restrict loudspeakers between 10 pm and 6 am unless local authorities allow it.",
       suggestion: "Start earlier, move loud music before 10 pm, or check the local permission.",
     };
   },
 
   ({ input }) =>
-    input.guests > 500 && (input.setting !== "indoor" || input.type === "community")
+    input.guests > LARGE_CROWD_GUESTS && (input.setting !== "indoor" || input.type === "community")
       ? {
           id: "crowd",
           severity: "warning",

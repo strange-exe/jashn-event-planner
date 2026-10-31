@@ -17,7 +17,11 @@ const large = (i: EventInput) => i.guests > 300 || isOneOf(i, "community", "fest
 
 const TEMPLATES: VendorTemplate[] = [
   {
-    id: "venue", name: "Venue", category: "venue", task: "venue", when: (i) => !i.venueBooked,
+    id: "venue",
+    name: "Venue",
+    category: "venue",
+    task: "venue",
+    when: (i) => !i.venueBooked,
     questions: (i) => [
       `Does it seat ${i.guests} guests comfortably, and what is the standing capacity?`,
       "What is included: chairs, tables, power backup, air conditioning, parking?",
@@ -29,7 +33,10 @@ const TEMPLATES: VendorTemplate[] = [
     why: "You have not booked a venue yet.",
   },
   {
-    id: "caterer", name: "Caterer", category: "catering", task: "caterer",
+    id: "caterer",
+    name: "Caterer",
+    category: "catering",
+    task: "caterer",
     questions: (i) => [
       "What is the per-plate price, and what is the minimum guaranteed count?",
       "Can we do a tasting before confirming the menu?",
@@ -41,7 +48,10 @@ const TEMPLATES: VendorTemplate[] = [
     why: "Food is usually the largest line in the budget.",
   },
   {
-    id: "decorator", name: "Decorator", category: "decor", task: "decor",
+    id: "decorator",
+    name: "Decorator",
+    category: "decor",
+    task: "decor",
     questions: (i) => [
       `Can you share a mock-up for the theme "${i.style || "to be decided"}"?`,
       "How long do setup and teardown take?",
@@ -51,7 +61,10 @@ const TEMPLATES: VendorTemplate[] = [
     why: "Decor sets the look of the event and needs lead time.",
   },
   {
-    id: "photographer", name: "Photographer", category: "photography", task: "photo",
+    id: "photographer",
+    name: "Photographer",
+    category: "photography",
+    task: "photo",
     questions: () => [
       "What do we receive, and how soon after the event?",
       "How many photographers or videographers will come?",
@@ -60,7 +73,10 @@ const TEMPLATES: VendorTemplate[] = [
     why: "Photos are what you keep after the day.",
   },
   {
-    id: "entertainment", name: "Music and entertainment", category: "entertainment", task: "entertainment",
+    id: "entertainment",
+    name: "Music and entertainment",
+    category: "entertainment",
+    task: "entertainment",
     questions: (i) => [
       isOneOf(i, "birthday") && has(i, "kidsFriendly")
         ? "Do you have a children's entertainer (magician, games host) for the age group?"
@@ -71,25 +87,40 @@ const TEMPLATES: VendorTemplate[] = [
     why: "Music and activities set the energy of the event.",
   },
   {
-    id: "attire", name: "Designer or tailor", category: "attire", task: "attire",
+    id: "attire",
+    name: "Designer or tailor",
+    category: "attire",
+    task: "attire",
     when: (i) => isOneOf(i, "wedding", "engagement") || i.priorities.includes("attire"),
     questions: () => ["How many fittings are included?", "What is the delivery date, with a buffer for alterations?"],
     why: "Outfits need fittings and alterations.",
   },
   {
-    id: "makeup", name: "Make-up artist", category: "attire", task: "attire",
+    id: "makeup",
+    name: "Make-up artist",
+    category: "attire",
+    task: "attire",
     when: (i) => isOneOf(i, "wedding", "engagement"),
-    questions: () => ["Can we book a trial session?", "How many people can you get ready, and how long does each take?"],
+    questions: () => [
+      "Can we book a trial session?",
+      "How many people can you get ready, and how long does each take?",
+    ],
     why: "Weddings and engagements usually have a make-up artist.",
   },
   {
-    id: "officiant", name: "Priest or officiant (if your traditions need one)", category: "entertainment", task: "venue-or-caterer",
+    id: "officiant",
+    name: "Priest or officiant (if your traditions need one)",
+    category: "entertainment",
+    task: "venue-or-caterer",
     when: (i) => isOneOf(i, "wedding", "engagement", "festival"),
     questions: () => ["Which items should we arrange for the ritual?", "How long does the ceremony take?"],
     why: "Many ceremonies need someone to lead the rituals; skip it if yours does not.",
   },
   {
-    id: "cake", name: "Baker", category: "catering", task: "menu",
+    id: "cake",
+    name: "Baker",
+    category: "catering",
+    task: "menu",
     when: (i) => isOneOf(i, "birthday", "anniversary"),
     questions: (i) => [
       `Can you make a cake that serves ${i.guests} guests?`,
@@ -98,7 +129,10 @@ const TEMPLATES: VendorTemplate[] = [
     why: "Birthdays and anniversaries usually have a cake.",
   },
   {
-    id: "invitations", name: "Invitation printer or designer", category: "invitations", task: "invites",
+    id: "invitations",
+    name: "Invitation printer or designer",
+    category: "invitations",
+    task: "invites",
     questions: (i) => [
       "Can we get a digital version for WhatsApp as well as print?",
       ...(has(i, "ecoFriendly") ? ["Do you offer seed paper or digital-only invitations?"] : []),
@@ -106,7 +140,10 @@ const TEMPLATES: VendorTemplate[] = [
     why: "Guests need the date, time and place in one clear message.",
   },
   {
-    id: "tent", name: "Tent, power and generator", category: "logistics", task: "tent",
+    id: "tent",
+    name: "Tent, power and generator",
+    category: "logistics",
+    task: "tent",
     when: (i) => i.setting === "outdoor",
     questions: () => [
       "Is the tent rated for rain and wind?",
@@ -116,7 +153,10 @@ const TEMPLATES: VendorTemplate[] = [
     why: "You chose an outdoor setting.",
   },
   {
-    id: "safety", name: "Security and first aid", category: "permits", task: "permits-or-caterer",
+    id: "safety",
+    name: "Security and first aid",
+    category: "permits",
+    task: "permits-or-caterer",
     when: large,
     questions: (i) => [
       `How many guards do you recommend for ${i.guests} guests?`,
@@ -126,9 +166,15 @@ const TEMPLATES: VendorTemplate[] = [
     why: "Large or public events need crowd management and first aid.",
   },
   {
-    id: "sanitation", name: "Sanitation and waste management", category: "logistics", task: "eco-or-caterer",
+    id: "sanitation",
+    name: "Sanitation and waste management",
+    category: "logistics",
+    task: "eco-or-caterer",
     when: (i) => large(i) || has(i, "ecoFriendly"),
-    questions: () => ["Can you provide separate wet and dry waste bins?", "Will you clean up and dispose of waste after the event?"],
+    questions: () => [
+      "Can you provide separate wet and dry waste bins?",
+      "Will you clean up and dispose of waste after the event?",
+    ],
     why: "Large events and eco-friendly plans need waste handled properly.",
   },
 ];
@@ -158,34 +204,88 @@ export function buildLogistics(input: EventInput): LogisticsItem[] {
   const seated = isOneOf(input, "community", "festival") ? Math.ceil(g * 0.6) : Math.ceil(g * 1.05);
   const items: LogisticsItem[] = [
     {
-      id: "plates", label: "Plates to order", quantity: Math.ceil(g * 1.05), unit: "plates",
+      id: "plates",
+      label: "Plates to order",
+      quantity: Math.ceil(g * 1.05),
+      unit: "plates",
       why: "Your guest count plus 5%, a common caterer buffer for unexpected guests.",
     },
     {
-      id: "seats", label: "Chairs", quantity: seated, unit: "chairs",
+      id: "seats",
+      label: "Chairs",
+      quantity: seated,
+      unit: "chairs",
       why: isOneOf(input, "community", "festival")
         ? "About 60% of guests sit at once at public events; the rest move around."
         : "Every guest gets a seat, plus 5% spare.",
     },
-    { id: "tables", label: "Dining tables (8 seats each)", quantity: Math.ceil(seated / 8), unit: "tables", why: "Round tables usually seat 8." },
-    { id: "staff", label: "Serving staff", quantity: Math.max(2, Math.ceil(g / 25)), unit: "people", why: "About one server per 25 guests for buffet service." },
     {
-      id: "water", label: "Drinking water", quantity: Math.ceil(g * (input.setting === "outdoor" ? 0.75 : 0.5)), unit: "litres",
-      why: input.setting === "outdoor" ? "About 0.75 L per guest outdoors over a 4-hour event." : "About 0.5 L per guest over a 4-hour event.",
+      id: "tables",
+      label: "Dining tables (8 seats each)",
+      quantity: Math.ceil(seated / 8),
+      unit: "tables",
+      why: "Round tables usually seat 8.",
     },
-    { id: "parking", label: "Parking spaces", quantity: Math.ceil(g / 3), unit: "cars", why: "Assumes about 3 guests per car." },
+    {
+      id: "staff",
+      label: "Serving staff",
+      quantity: Math.max(2, Math.ceil(g / 25)),
+      unit: "people",
+      why: "About one server per 25 guests for buffet service.",
+    },
+    {
+      id: "water",
+      label: "Drinking water",
+      quantity: Math.ceil(g * (input.setting === "outdoor" ? 0.75 : 0.5)),
+      unit: "litres",
+      why:
+        input.setting === "outdoor"
+          ? "About 0.75 L per guest outdoors over a 4-hour event."
+          : "About 0.5 L per guest over a 4-hour event.",
+    },
+    {
+      id: "parking",
+      label: "Parking spaces",
+      quantity: Math.ceil(g / 3),
+      unit: "cars",
+      why: "Assumes about 3 guests per car.",
+    },
   ];
   if (input.setting === "outdoor" || isOneOf(input, "community", "festival")) {
-    items.push({ id: "toilets", label: "Restrooms or portable toilets", quantity: Math.max(2, Math.ceil(g / 75)), unit: "units", why: "Roughly one per 75 guests, with at least two." });
+    items.push({
+      id: "toilets",
+      label: "Restrooms or portable toilets",
+      quantity: Math.max(2, Math.ceil(g / 75)),
+      unit: "units",
+      why: "Roughly one per 75 guests, with at least two.",
+    });
   }
   if (isOneOf(input, "community", "festival")) {
-    items.push({ id: "volunteers", label: "Volunteers", quantity: Math.max(4, Math.ceil(g / 40)), unit: "people", why: "About one volunteer per 40 guests for entry, queues and help desks." });
+    items.push({
+      id: "volunteers",
+      label: "Volunteers",
+      quantity: Math.max(4, Math.ceil(g / 40)),
+      unit: "people",
+      why: "About one volunteer per 40 guests for entry, queues and help desks.",
+    });
   }
   if (isOneOf(input, "birthday", "anniversary")) {
-    items.push({ id: "cake", label: "Cake size", quantity: Math.max(1, Math.ceil(g / 10)), unit: "kg", why: "About 10 servings per kilogram." });
+    items.push({
+      id: "cake",
+      label: "Cake size",
+      quantity: Math.max(1, Math.ceil(g / 10)),
+      unit: "kg",
+      why: "About 10 servings per kilogram.",
+    });
   }
   if (input.preferences.includes("ecoFriendly") || g > 150) {
-    items.push({ id: "bins", label: "Waste bin pairs (wet and dry)", quantity: Math.max(2, Math.ceil(g / 50)), unit: "pairs", why: "One pair per 50 guests keeps waste sorted at the source." });
+    items.push({
+      id: "bins",
+      label: "Waste bin pairs (wet and dry)",
+      quantity: Math.max(2, Math.ceil(g / 50)),
+      unit: "pairs",
+      why: "One pair per 50 guests keeps waste sorted at the source.",
+    });
   }
   return items;
 }

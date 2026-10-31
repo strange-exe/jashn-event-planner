@@ -53,6 +53,14 @@ test("rejects a budget that is too small", async ({ page }) => {
   await expect(page.getByRole("alert").filter({ hasText: "Fix the highlighted field" })).toBeVisible();
 });
 
+test("the form cannot be submitted before it is interactive", async ({ page, request }) => {
+  // A click before hydration would do a native submit and reload an empty form.
+  const html = await (await request.get("/plan/new")).text();
+  expect(html).toMatch(/<button type="submit"[^>]*disabled/);
+  await page.goto("/plan/new");
+  await expect(page.getByRole("button", { name: "Continue" })).toBeEnabled();
+});
+
 test("tasks stay ticked after a reload", async ({ page }) => {
   await openSample(page);
   await page.getByRole("tab", { name: /Timeline/ }).click();

@@ -29,7 +29,9 @@ describe("buildBudget", () => {
   it("adds up to the exact total for every event type and many totals", () => {
     for (const type of EVENT_TYPES) {
       for (const budget of [15_000, 99_999, 250_050, 3_333_333]) {
-        const b = buildBudget(makeInput({ type, budget, setting: "outdoor", priorities: ["food", "decor", "photography"] }));
+        const b = buildBudget(
+          makeInput({ type, budget, setting: "outdoor", priorities: ["food", "decor", "photography"] }),
+        );
         expect(sum(b.lines.map((l) => l.amount))).toBe(budget);
         expect(b.lines.every((l) => l.amount >= 0)).toBe(true);
       }
