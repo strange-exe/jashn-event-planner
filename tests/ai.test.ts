@@ -75,14 +75,14 @@ describe("handleAssistant", () => {
     vi.stubEnv("GEMINI_MODELS", "m1");
     const { client } = fakeClient("not json");
     const res = await handleAssistant(request("add 20 guests"), { client, today: TODAY });
-    expect(res.source).toBe("rules");
+    expect(res).toMatchObject({ source: "rules", fallback: "unavailable" });
     expect(res.changes.map((c) => c.change)).toEqual([{ op: "addGuests", value: 20 }]);
   });
 
   it("works with no API key and explains what it can do", async () => {
     vi.stubEnv("GEMINI_API_KEY", "");
     const res = await handleAssistant(request("hello"), { today: TODAY });
-    expect(res).toMatchObject({ source: "rules", changes: [] });
+    expect(res).toMatchObject({ source: "rules", fallback: "not-configured", changes: [] });
     expect(res.reply).toMatch(/cut the budget/);
   });
 

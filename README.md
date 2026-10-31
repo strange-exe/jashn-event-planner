@@ -2,6 +2,8 @@
 
 **Chosen vertical:** Celebration & Event Planning assistant.
 
+**Live demo:** https://jashn.abhinesh.codes/
+
 Jashn helps people organise weddings, engagements, birthdays, anniversaries, community events and festival gatherings in India. Describe the event in about two minutes and get:
 
 - a **budget split** that always adds up to your total, with the reason behind every line;
