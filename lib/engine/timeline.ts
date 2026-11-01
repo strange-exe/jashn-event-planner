@@ -1,5 +1,5 @@
 import { addDays, addMinutes } from "./dates";
-import { hasPreference, isPublicEvent, needsAttire } from "./rules";
+import { hasFunction, hasPreference, isPublicEvent, needsAttire } from "./rules";
 import type { EventInput, EventType, Phase, RunSheetItem, Task } from "./types";
 
 // How far ahead tasks happen compared with a wedding (1 = wedding lead times).
@@ -152,6 +152,43 @@ const TEMPLATES = [
     min: 2,
     when: (i) => hasPreference(i, "kidsFriendly"),
     why: "You expect children, who need space and supervision.",
+  },
+  {
+    id: "mehendi-artists",
+    title: "Book henna artists for the mehendi",
+    phase: "bookings",
+    lead: 90,
+    min: 7,
+    when: (i) => hasFunction(i, "mehendi"),
+    why: "Good henna artists are booked out in the wedding season.",
+  },
+  {
+    id: "sangeet-practice",
+    title: "Book a choreographer and fix the sangeet running order",
+    phase: "details",
+    lead: 60,
+    min: 7,
+    when: (i) => hasFunction(i, "sangeet"),
+    why: "Family performances need a few weeks of practice.",
+  },
+  {
+    id: "haldi-kit",
+    title: "Arrange haldi flowers, turmeric and a splash-safe area",
+    phase: "final-week",
+    lead: 7,
+    min: 2,
+    fixed: true,
+    when: (i) => hasFunction(i, "haldi"),
+    why: "Fresh flowers and a messy area are sorted out in the last week.",
+  },
+  {
+    id: "function-transport",
+    title: "Plan guest transport and stay across the function days",
+    phase: "details",
+    lead: 45,
+    min: 5,
+    when: (i) => i.days > 1,
+    why: "Outstation guests need rooms and rides for every day of the celebration.",
   },
   {
     id: "rsvp",

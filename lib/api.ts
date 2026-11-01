@@ -1,6 +1,8 @@
-import type { AssistantResult, IdeasResult } from "./ai/handlers";
+import type { AssistantResult, IdeasResult, InviteResult, LocalResult } from "./ai/handlers";
+import type { LocalTopic } from "./local";
 import type { EventInput } from "./engine/types";
 import type { IdeaCategory } from "./ideas";
+import type { InviteLanguage, InviteTone } from "./invite";
 import type { ChatMessage } from "./store";
 
 // Typed browser client for the app's own API routes. The response types come from the
@@ -26,4 +28,12 @@ export function askAssistant(input: EventInput, message: string, history: ChatMe
 
 export function getIdeas(input: EventInput, category?: IdeaCategory): Promise<IdeasResult> {
   return postJson("/api/ideas", { input, ...(category ? { category } : {}) }, "Could not get ideas.");
+}
+
+export function findLocal(input: EventInput, topic: LocalTopic): Promise<LocalResult> {
+  return postJson("/api/local", { input, topic }, "Could not search right now.");
+}
+
+export function writeInvite(input: EventInput, language: InviteLanguage, tone: InviteTone): Promise<InviteResult> {
+  return postJson("/api/invite", { input, language, tone }, "Could not write the invite.");
 }

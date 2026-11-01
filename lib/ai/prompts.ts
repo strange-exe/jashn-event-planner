@@ -86,6 +86,32 @@ export const IDEAS_SYSTEM = [
   DATA_RULE,
 ].join("\n");
 
+export const INVITE_SYSTEM = [
+  "You write short WhatsApp invitations for celebrations in India, from the event details.",
+  "Include the occasion, the date, the start time, the city and the reply-by date when one is given. " +
+    "Mention the theme only if the details have one.",
+  "Never invent details that are not given: no venue names, dress codes, menus, hosts' names or schedules. " +
+    "No assumptions about religion or customs unless the details mention them.",
+  "Plain text with line breaks, under 90 words, at most two emoji. No markdown, no links, no placeholders like [Name].",
+  "Write in the requested language. For Hindi, use Devanagari script and natural, everyday Hindi.",
+  DATA_RULE,
+].join("\n");
+
+export function invitePrompt(
+  input: EventInput,
+  language: string,
+  tone: string,
+  details: { date: string; time: string; rsvpBy: string | null },
+): string {
+  return [
+    `<event_details>${eventJson(input)}</event_details>`,
+    `Date to write: ${details.date}. Start time: ${details.time}.`,
+    details.rsvpBy ? `Ask guests to reply by ${details.rsvpBy}.` : "Ask guests to reply soon.",
+    `Language: ${language === "hi" ? "Hindi" : "English"}. Tone: ${tone}.`,
+    'Return JSON: {"text": string}.',
+  ].join("\n\n");
+}
+
 export function ideasPrompt(input: EventInput, perGuest: number, category?: string): string {
   return [
     `<event_details>${eventJson(input)}</event_details>`,

@@ -75,6 +75,13 @@ export function Wizard({ sample, editId }: WizardProps) {
       setStep(step + 1);
       return;
     }
+    // A later answer can invalidate an earlier step; send the user back to it.
+    const earlier = STEP_FIELDS.findIndex((fields) => fields.some((f) => errors[f]));
+    if (earlier >= 0) {
+      setShowErrors(true);
+      setStep(earlier);
+      return;
+    }
     const input = EventInputSchema.parse(toInput(draft));
     if (editing) {
       updatePlan(editing.id, (p) => ({ ...p, input, locks: {} }));

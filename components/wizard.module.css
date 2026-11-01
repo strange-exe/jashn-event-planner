@@ -82,3 +82,26 @@
   padding-top: var(--space-4);
   border-top: 1px solid var(--border);
 }
+.functions {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.functions > li {
+  display: grid;
+  gap: var(--space-2);
+}
+/* The day, time and guests of a picked function, indented under its checkbox. */
+.functionRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 132px), 1fr));
+  gap: var(--space-3);
+  margin-left: var(--space-6);
+  padding-left: var(--space-4);
+  border-left: 2px solid var(--accent-ink);
+}
+.functionRow .field {
+  min-width: 0;
+}

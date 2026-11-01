@@ -18,6 +18,9 @@ const PATHS = {
   arrowRight: "M5 12h14m-6-6l6 6-6 6",
   chat: "M5 5h14a1 1 0 011 1v9a1 1 0 01-1 1H10l-5 4v-4H5a1 1 0 01-1-1V6a1 1 0 011-1z",
   close: "M6 6l12 12M18 6L6 18",
+  copy: "M9 9h10v11H9V9zM5 15V5a1 1 0 011-1h9",
+  share:
+    "M8 12a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0zm13-6.5a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0zm0 13a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0zM7.6 10.8l8.8-4.1m-8.8 6.5l8.8 4.1",
 } as const;
 
 export type IconName = keyof typeof PATHS;

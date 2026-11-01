@@ -3,39 +3,114 @@
   display: grid;
   gap: var(--space-5);
 }
+/* The dusk header: the plan's one rich moment. Its tokens are swapped locally, so the
+   shared buttons and hints inside it read on the dusk colour in both themes. */
 .head {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-4);
-  justify-content: space-between;
-  align-items: flex-end;
+  display: grid;
+  gap: var(--space-5);
+  align-items: end;
+  padding: var(--space-5);
+  border-radius: var(--radius-card);
+  background: var(--dusk);
+  color: var(--dusk-ink);
+  --text: var(--dusk-ink);
+  --muted: var(--dusk-soft);
+  --border-strong: var(--dusk-line);
+  --surface-2: #f6eee41a;
+  --accent-ink: var(--accent);
+  --focus: var(--dusk-focus);
+}
+@media (min-width: 768px) {
+  .head {
+    padding: var(--space-6) var(--space-6) var(--space-5);
+  }
+}
+@media print {
+  .head {
+    padding: 0;
+    background: none;
+    color: #000;
+    --text: #000;
+    --muted: #333;
+    --accent-ink: #000;
+  }
+}
+@media (min-width: 768px) {
+  .head {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
+.headText {
+  display: grid;
+  gap: var(--space-2);
 }
 .title {
-  font-size: var(--step-3);
-}
-.countdown {
-  color: var(--text);
-  white-space: nowrap;
+  font-size: clamp(1.75rem, 2.4vw + 1rem, 2.6rem);
+  max-width: 24ch;
 }
 .actions {
   gap: var(--space-1);
+  margin-left: calc(-1 * var(--space-3));
+  margin-top: var(--space-2);
+}
+.actions :global(.btn) {
+  color: var(--text);
+}
+.actions :global(.btn-secondary) {
+  margin: 0 var(--space-2) 0 var(--space-3);
+}
+/* The countdown is the one big figure on the page. */
+.countdown {
+  display: grid;
+  justify-items: start;
+  padding-bottom: var(--space-2);
+}
+@media (min-width: 768px) {
+  .countdown {
+    justify-items: end;
+    text-align: right;
+  }
+}
+.countFigure {
+  font: 500 clamp(3rem, 5vw + 1rem, 4.5rem) / 0.95 var(--font-head);
+  letter-spacing: -0.02em;
+  color: var(--accent-ink);
+}
+.countWords {
+  color: var(--muted);
 }
 .missing {
   max-width: 640px;
   margin: var(--space-7) auto 0;
 }
 
+/* Four figures on one hairline band, not four boxes. */
 .stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr));
-  gap: var(--space-2);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   margin: 0;
+  border-block: 1px solid var(--border);
+}
+@media (min-width: 768px) {
+  .stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 .stats > div {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-control);
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-4) var(--space-4) var(--space-4) 0;
+}
+.stats > div + div {
+  padding-left: var(--space-4);
+  border-left: 1px solid var(--border);
+}
+@media (max-width: 767px) {
+  .stats > div:nth-child(3) {
+    padding-left: 0;
+    border-left: 0;
+  }
+  .stats > div:nth-child(n + 3) {
+    border-top: 1px solid var(--border);
+  }
 }
 .stats dt {
   font-size: var(--step--1);
@@ -43,7 +118,11 @@
 }
 .stats dd {
   margin: 0;
-  font: 600 var(--step-1) / 1.3 var(--font-head);
+  font: 500 var(--step-2) / 1.25 var(--font-head);
+}
+.stats .statSub {
+  font: 400 var(--step--1) / 1.4 var(--font-body);
+  color: var(--muted);
 }
 
 .layout {
@@ -83,7 +162,7 @@
 }
 .tab[aria-selected="true"] {
   color: var(--text);
-  border-bottom-color: var(--accent);
+  border-bottom-color: var(--accent-ink);
 }
 .count {
   font-size: 12px;
@@ -131,6 +210,51 @@
   display: grid;
   gap: var(--space-1);
 }
+.functionItem {
+  display: grid;
+  gap: var(--space-1);
+}
+.needs {
+  margin: var(--space-1) 0 0;
+  padding-left: var(--space-5);
+  color: var(--muted);
+}
+.topics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.topics button[aria-pressed="true"] {
+  border-color: var(--accent-ink);
+  background: var(--accent-soft);
+}
+.grounded {
+  display: grid;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+}
+/* The grounded answer keeps the line breaks Google returned. */
+.groundedText {
+  white-space: pre-line;
+  max-width: 70ch;
+}
+.sources {
+  margin: 0;
+  padding-left: var(--space-5);
+  display: grid;
+  gap: var(--space-1);
+}
+.suggestions {
+  width: 100%;
+  height: 72px;
+  border: 0;
+  color-scheme: light;
+}
+/* Run sheet groups on multi-day plans: one heading per function and its date. */
+.runGroup + .runGroup {
+  margin-top: var(--space-4);
+}
 .task {
   display: flex;
   flex-wrap: wrap;
@@ -148,13 +272,38 @@
 .check input {
   width: 22px;
   height: 22px;
-  accent-color: var(--accent);
+  accent-color: var(--accent-ink);
   flex: none;
   margin: 0;
 }
 .doneText {
   text-decoration: line-through;
   color: var(--muted);
+}
+.marigold {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  fill: var(--marigold);
+}
+.marigoldHeart {
+  fill: var(--accent-ink);
+}
+@media (prefers-reduced-motion: no-preference) {
+  /* Interface motion: a spring with a slight overshoot. */
+  .bloom {
+    animation: bloom 520ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+}
+@keyframes bloom {
+  from {
+    opacity: 0;
+    transform: scale(0.2) rotate(-60deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 .due {
   display: inline-flex;
@@ -217,8 +366,20 @@
   padding-left: var(--space-5);
   color: var(--muted);
 }
+.editForm {
+  display: grid;
+  gap: var(--space-3);
+}
 .editRow {
-  align-items: flex-start;
+  align-items: center;
+}
+/* A full-width slider with a 24px thumb and the accent fill. */
+.slider {
+  width: 100%;
+  min-height: 44px;
+  margin: 0;
+  accent-color: var(--accent-ink);
+  cursor: pointer;
 }
 .amountInput {
   max-width: 220px;
@@ -316,7 +477,7 @@
   display: grid;
   gap: var(--space-2);
   padding: var(--space-3);
-  border: 2px solid var(--accent);
+  border: 2px solid var(--accent-ink);
   border-radius: var(--radius-control);
 }
 .proposal ul {
@@ -341,4 +502,243 @@
 }
 .compose :global(.btn) {
   padding: 0 var(--space-4);
+}
+
+/* Guests */
+.rsvpStats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 110px), 1fr));
+  gap: var(--space-3);
+  margin: 0;
+}
+.rsvpStats dt {
+  font-size: var(--step--1);
+  color: var(--muted);
+}
+.rsvpStats dd {
+  margin: 0;
+  font: 500 var(--step-2) / 1.2 var(--font-head);
+}
+.callout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-2);
+  border-radius: var(--radius-control);
+}
+.addGuest {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--bg);
+}
+.addFields {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
+  align-items: end;
+}
+.wide {
+  grid-column: 1 / -1;
+}
+.small {
+  max-width: 96px;
+}
+.modeSwitch {
+  display: inline-flex;
+  justify-self: start;
+  padding: 3px;
+  gap: 2px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+}
+.modeSwitch button {
+  min-height: 38px;
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font: 600 var(--step--1) / 1 var(--font-body);
+  cursor: pointer;
+}
+.modeSwitch button:hover {
+  color: var(--text);
+}
+.modeSwitch button[aria-pressed="true"] {
+  background: var(--accent-soft);
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px var(--accent-ink);
+}
+.guestFilters {
+  align-items: flex-end;
+}
+.guestFilters .field {
+  min-width: 180px;
+}
+.guest,
+.payment {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: var(--space-2) var(--space-3);
+  align-items: center;
+}
+.payment {
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+}
+.guestName {
+  display: grid;
+  min-width: 0;
+}
+.guestName strong,
+.paymentName {
+  overflow-wrap: anywhere;
+}
+.rsvpSelect {
+  width: auto;
+  min-width: 140px;
+}
+.rsvpSelect[data-rsvp="yes"] {
+  border-color: var(--success);
+}
+.rsvpSelect[data-rsvp="no"] {
+  color: var(--muted);
+}
+.paymentAmount {
+  font-weight: 600;
+}
+@media (max-width: 520px) {
+  .guest,
+  .payment {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .guestName {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Invite */
+.inviteControls {
+  align-items: flex-end;
+}
+.inviteControls .field {
+  min-width: 150px;
+}
+.inviteText {
+  min-height: 200px !important;
+  line-height: 1.6;
+}
+
+/* Spending ring */
+.ring {
+  display: grid;
+  gap: var(--space-5);
+  align-items: center;
+  grid-template-columns: 136px minmax(0, 1fr);
+}
+@media (max-width: 420px) {
+  .ring {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: start;
+  }
+}
+.ring svg {
+  width: 136px;
+  height: 136px;
+}
+.ring circle {
+  fill: none;
+  stroke-width: 14;
+  transform: rotate(-90deg);
+  transform-origin: 64px 64px;
+}
+.ringTrack {
+  stroke: var(--track);
+}
+.ringPaid {
+  stroke: var(--accent-ink);
+  stroke-linecap: butt;
+}
+.ringDue {
+  stroke: var(--marigold);
+}
+.ringFigure {
+  font: 500 26px var(--font-head);
+  fill: var(--text);
+}
+.ringLabel {
+  font: 400 13px var(--font-body);
+  fill: var(--muted);
+}
+.ringLegend {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+.ringLegend > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: var(--space-2);
+}
+.ringLegend dt {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+  color: var(--muted);
+}
+.ringLegend dd {
+  margin: 0;
+  font-weight: 600;
+}
+.key {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+.keyPaid {
+  background: var(--accent-ink);
+}
+.keyDue {
+  background: var(--marigold);
+}
+.sharedGrid {
+  display: grid;
+  gap: var(--space-4);
+  align-items: start;
+}
+@media (min-width: 1024px) {
+  .sharedGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .sharedGrid > :first-child {
+    grid-row: span 2;
+  }
+}
+.lineSpend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+/* Invitation card image */
+.cardControls {
+  max-width: 36rem;
+}
+.cardPreview {
+  display: block;
+  width: 100%;
+  max-width: 360px;
+  height: auto;
+  aspect-ratio: 1080 / 1350;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
 }

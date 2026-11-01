@@ -14,13 +14,16 @@ test("pages send a nonce-based CSP and hardening headers", async ({ request }) =
   expect(h["x-powered-by"]).toBeUndefined();
 });
 
-test("every script tag carries the nonce", async ({ page }) => {
-  const res = await page.goto("/");
-  const nonce = /'nonce-([^']+)'/.exec(res?.headers()["content-security-policy"] ?? "")?.[1];
+// Checks the HTML the server sent. Chunks that Next's runtime adds later (the lazy
+// three.js scene) have no nonce attribute and are allowed by 'strict-dynamic', so
+// reading the live DOM made this test depend on when the idle callback ran.
+test("every script tag the server sends carries the nonce", async ({ request }) => {
+  const res = await request.get("/");
+  const nonce = /'nonce-([^']+)'/.exec(res.headers()["content-security-policy"] ?? "")?.[1];
   expect(nonce).toBeTruthy();
-  const scripts = await page.$$eval("script", (els) => els.map((s) => s.nonce));
-  expect(scripts.length).toBeGreaterThan(0);
-  expect(scripts.every((n) => n === nonce)).toBe(true);
+  const tags = (await res.text()).match(/<script\b[^>]*>/g) ?? [];
+  expect(tags.length).toBeGreaterThan(0);
+  for (const tag of tags) expect(tag).toContain(`nonce="${nonce}"`);
 });
 
 test("API rejects invalid, oversized and non-JSON bodies", async ({ request }) => {

@@ -148,7 +148,7 @@ function budgetWeights(input: EventInput): Weights {
 }
 
 /** Rupee step used for rounding: whole hundreds once budgets reach a lakh. */
-function roundingUnit(total: number): number {
+export function roundingUnit(total: number): number {
   return total >= 100_000 ? 100 : 1;
 }
 

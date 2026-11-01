@@ -3,7 +3,9 @@
 import { useSyncExternalStore } from "react";
 import { z } from "zod";
 import { BUDGET_CATEGORIES, type EventInput } from "./engine/types";
+import { GuestSchema } from "./guests";
 import { IdeaSchema } from "./ideas";
+import { PaymentSchema } from "./payments";
 import { EventInputSchema, LIMITS } from "./schema";
 
 // Plans live in this browser's localStorage, so there is no account or database
@@ -23,6 +25,8 @@ const SavedPlanSchema = z.object({
   booked: z.record(z.string(), z.boolean()).default({}),
   ideas: z.array(IdeaSchema).max(LIMITS.savedIdeas).default([]),
   chat: z.array(ChatSchema).max(LIMITS.savedChat).default([]),
+  guests: z.array(GuestSchema).max(LIMITS.savedGuests).default([]),
+  payments: z.array(PaymentSchema).max(LIMITS.savedPayments).default([]),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
@@ -83,16 +87,21 @@ export function usePlan(id: string): SavedPlan | undefined | null {
   return plans === null ? null : plans.find((p) => p.id === id);
 }
 
-export function createPlan(input: EventInput): SavedPlan {
+/** Progress that can come with a new plan, such as from a shared link. */
+type Progress = Partial<Pick<SavedPlan, "locks" | "done" | "booked">>;
+
+export function createPlan(input: EventInput, progress: Progress = {}): SavedPlan {
   const now = new Date().toISOString();
   const plan: SavedPlan = {
     id: crypto.randomUUID(),
     input,
-    locks: {},
-    done: {},
-    booked: {},
+    locks: progress.locks ?? {},
+    done: progress.done ?? {},
+    booked: progress.booked ?? {},
     ideas: [],
     chat: [],
+    guests: [],
+    payments: [],
     createdAt: now,
     updatedAt: now,
   };

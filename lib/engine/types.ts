@@ -16,11 +16,31 @@ export type Priority = (typeof PRIORITIES)[number];
 export const PREFERENCES = ["vegetarianOnly", "alcoholFree", "ecoFriendly", "stepFreeAccess", "kidsFriendly"] as const;
 export type Preference = (typeof PREFERENCES)[number];
 
+/** Functions of a multi-day wedding, in the order they usually happen. */
+export const FUNCTION_KINDS = ["haldi", "mehendi", "sangeet", "cocktail", "wedding", "reception"] as const;
+export type FunctionKind = (typeof FUNCTION_KINDS)[number];
+
+export const MAX_DAYS = 3;
+
+export interface EventFunction {
+  kind: FunctionKind;
+  /** 1 is the first day of the celebration. */
+  day: number;
+  /** HH:mm (24 h). */
+  startTime: string;
+  /** Guests at this function; everyone when left out. */
+  guests?: number;
+}
+
 export interface EventInput {
   type: EventType;
   title: string;
-  /** Event day, ISO yyyy-mm-dd. */
+  /** Event day (the first day of a multi-day wedding), ISO yyyy-mm-dd. */
   date: string;
+  /** How many days the celebration spans, 1 to MAX_DAYS. */
+  days: number;
+  /** The functions of a wedding, each on one of the days. Empty for a single gathering. */
+  functions: EventFunction[];
   /** Start time on the day, HH:mm (24 h). */
   startTime: string;
   city: string;
@@ -88,6 +108,10 @@ export interface Task {
 }
 
 export interface RunSheetItem {
+  /** The function this step belongs to, on multi-day plans. */
+  function?: FunctionKind;
+  /** ISO date of the step, on multi-day plans. */
+  date?: string;
   time: string;
   title: string;
   detail: string;
@@ -120,12 +144,29 @@ export interface Insight {
   suggestion: string;
 }
 
+/** One function of a multi-day plan, with its date and a rough share of the budget. */
+export interface FunctionPlan {
+  kind: FunctionKind;
+  day: number;
+  /** ISO yyyy-mm-dd. */
+  date: string;
+  startTime: string;
+  guests: number;
+  /** Rough share of the total budget for this function, in rupees. */
+  amount: number;
+  percent: number;
+  /** What this function needs that the others do not. */
+  needs: string[];
+}
+
 export interface Plan {
   input: EventInput;
   /** Date the plan was computed for, ISO yyyy-mm-dd. */
   today: string;
   daysToGo: number;
   budget: Budget;
+  /** Empty unless the event has functions. */
+  functions: FunctionPlan[];
   tasks: Task[];
   runSheet: RunSheetItem[];
   vendors: Vendor[];

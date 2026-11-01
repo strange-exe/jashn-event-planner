@@ -33,7 +33,12 @@ export function Assistant({ saved, onApplied }: AssistantProps) {
   const logRef = useRef<HTMLDivElement>(null);
   const uid = useId();
 
+  // Follow new messages only. On first load the page stays at the top: scrolling the
+  // last message into view there dragged phones down to the assistant.
+  const seenChat = useRef(saved.chat.length);
   useEffect(() => {
+    if (saved.chat.length <= seenChat.current) return;
+    seenChat.current = saved.chat.length;
     logRef.current?.lastElementChild?.scrollIntoView({ block: "nearest" });
   }, [saved.chat.length]);
 

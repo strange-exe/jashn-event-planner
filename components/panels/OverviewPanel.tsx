@@ -1,6 +1,7 @@
 "use client";
 
-import { formatNumber } from "@/lib/engine/money";
+import { formatINR, formatNumber } from "@/lib/engine/money";
+import { formatDate, FUNCTION_LABEL } from "@/lib/labels";
 import styles from "../dashboard.module.css";
 import { StatusBadge } from "../feedback";
 import { SeverityBadge } from "../SeverityBadge";
@@ -12,6 +13,37 @@ export function OverviewPanel({ plan, saved }: PanelProps) {
   const open = plan.tasks.filter((t) => !saved.done[t.id]).slice(0, NEXT_UP_COUNT);
   return (
     <div className={styles.panelGrid}>
+      {plan.functions.length > 0 && (
+        <Card
+          title="Functions"
+          aside={<span className="muted">{plan.input.days === 1 ? "1 day" : `${plan.input.days} days`}</span>}
+        >
+          <p className="hint">
+            A rough share of the total for each function, by its guests and the kind of function. The budget lines are
+            unchanged.
+          </p>
+          <ol className={styles.list}>
+            {plan.functions.map((f) => (
+              <li key={f.kind} className={styles.functionItem}>
+                <div className={styles.budgetRow}>
+                  <strong>{FUNCTION_LABEL[f.kind].name}</strong>
+                  <span className="num">
+                    <strong>{formatINR(f.amount)}</strong> <span className="muted">{f.percent}%</span>
+                  </span>
+                </div>
+                <p className="muted num">
+                  Day {f.day}, {formatDate(f.date)} at {f.startTime}, {formatNumber(f.guests)} guests
+                </p>
+                <ul className={styles.needs}>
+                  {f.needs.map((n) => (
+                    <li key={n}>{n}</li>
+                  ))}
+                </ul>
+              </li>
+            ))}
+          </ol>
+        </Card>
+      )}
       <Card title="What needs attention">
         {plan.insights.length === 0 ? (
           <p className="row">

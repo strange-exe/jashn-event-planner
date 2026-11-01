@@ -1,5 +1,6 @@
 import { addDays } from "./engine/dates";
 import type { Plan } from "./engine/types";
+import { FUNCTION_LABEL } from "./labels";
 
 // Builds an iCalendar file (RFC 5545) with the event and every task as an
 // all-day reminder, so the timeline can go into Google, Apple or Outlook calendars.
@@ -58,7 +59,16 @@ export function planToIcs(plan: Plan, uid: string, stamp = new Date()): string {
     "VERSION:2.0",
     "PRODID:-//Jashn//Event planner//EN",
     "CALSCALE:GREGORIAN",
-    ...event("event", plan.input.date, plan.input.title, `${plan.input.city}, starts ${plan.input.startTime}`),
+    ...(plan.functions.length
+      ? plan.functions.flatMap((f) =>
+          event(
+            `fn-${f.kind}`,
+            f.date,
+            `${plan.input.title}: ${FUNCTION_LABEL[f.kind].name}`,
+            `${plan.input.city}, starts ${f.startTime}`,
+          ),
+        )
+      : event("event", plan.input.date, plan.input.title, `${plan.input.city}, starts ${plan.input.startTime}`)),
     ...plan.tasks
       .filter((t) => t.phase !== "day-of")
       .flatMap((t) => event(t.id, t.due, `${plan.input.title}: ${t.title}`, t.why)),

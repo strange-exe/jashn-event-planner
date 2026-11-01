@@ -12,7 +12,17 @@ export function watchErrors(page: Page): string[] {
     if (e.message.includes("_rsc=") && e.message.includes("access control checks")) return;
     errors.push(`pageerror: ${e.message}`);
   });
+  // A reload or navigation cancels requests the previous document started (the
+  // idle-loaded three.js chunk among them; Firefox reports NS_BINDING_ABORTED).
+  // Only failures of requests made by the current document count.
+  let documentId = 0;
+  const startedIn = new WeakMap<object, number>();
+  page.on("framenavigated", (f) => {
+    if (f === page.mainFrame()) documentId += 1;
+  });
+  page.on("request", (r) => startedIn.set(r, documentId));
   page.on("requestfailed", (r) => {
+    if ((startedIn.get(r) ?? documentId) < documentId) return;
     // Next aborts in-flight RSC prefetches when a navigation starts; those are expected.
     if (r.url().includes("_rsc=")) return;
     // Browsers fetch icons out of band; a reload can cancel that fetch (Firefox

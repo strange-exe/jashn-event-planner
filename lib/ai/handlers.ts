@@ -4,8 +4,28 @@ import { todayIn } from "../engine/dates";
 import { parseIntent } from "../engine/intent";
 import { buildPlan } from "../engine/plan";
 import { fallbackIdeas, IDEA_CATEGORIES, type Idea } from "../ideas";
+import {
+  cleanInvite,
+  fallbackInvite,
+  INVITE_LANGUAGES,
+  INVITE_TONES,
+  inviteDate,
+  InviteSchema,
+  inviteTime,
+  rsvpBy,
+} from "../invite";
 import { cleanText, EventInputSchema, LIMITS, toChange, type Change } from "../schema";
-import { aiConfigured, generateJson, type GenerateClient } from "./gemini";
+import {
+  LOCAL_SYSTEM,
+  LOCAL_TOPICS,
+  localPrompt,
+  mapsSearchUrl,
+  toAnswer,
+  toolFor,
+  type LocalAnswer,
+  type LocalTopic,
+} from "../local";
+import { aiConfigured, generateGrounded, generateJson, type GenerateClient, type GroundedClient } from "./gemini";
 import {
   ASSISTANT_SYSTEM,
   AssistantReplySchema,
@@ -13,6 +33,8 @@ import {
   IDEAS_SYSTEM,
   IdeasSchema,
   ideasPrompt,
+  INVITE_SYSTEM,
+  invitePrompt,
 } from "./prompts";
 
 const message = z.string().transform(cleanText).pipe(z.string().min(1).max(LIMITS.message));
@@ -29,6 +51,12 @@ export const AssistantRequestSchema = z.object({
 export const IdeasRequestSchema = z.object({
   input: EventInputSchema,
   category: z.enum(IDEA_CATEGORIES).optional(),
+});
+
+export const InviteRequestSchema = z.object({
+  input: EventInputSchema,
+  language: z.enum(INVITE_LANGUAGES),
+  tone: z.enum(INVITE_TONES),
 });
 
 type Source = "ai" | "rules";
@@ -57,6 +85,13 @@ export interface IdeasResult {
   fallback?: Fallback;
 }
 
+/** Response body of POST /api/invite. */
+export interface InviteResult {
+  text: string;
+  source: Source;
+  fallback?: Fallback;
+}
+
 interface Options {
   client?: GenerateClient;
   today?: string;
@@ -66,12 +101,12 @@ const HELP =
   'I can change the plan for you. Try: "cut the budget by 15%", "add 40 guests", "make it eco-friendly", ' +
   '"start at 7 pm", "move it to 2027-03-14" or "prioritise food and photos".';
 
-function aiEnabled(o: Options) {
+function aiEnabled(o: { client?: unknown }) {
   return Boolean(o.client) || aiConfigured();
 }
 
 /** Logs why the model was skipped (never the key), so a deploy problem shows up in server logs. */
-function fallbackReason(o: Options, error?: unknown): Fallback {
+function fallbackReason(o: { client?: unknown }, error?: unknown): Fallback {
   if (!aiEnabled(o)) return "not-configured";
   console.error("Gemini unavailable, using rules:", error instanceof Error ? error.message : "unknown error");
   return "unavailable";
@@ -131,4 +166,76 @@ export async function handleIdeas(body: z.infer<typeof IdeasRequestSchema>, o: O
     }
   }
   return { ideas: fallbackIdeas(body.input, body.category), source: "rules", fallback: fallbackReason(o, error) };
+}
+
+export const LocalRequestSchema = z.object({
+  input: EventInputSchema,
+  topic: z.enum(LOCAL_TOPICS),
+});
+
+/** Response body of POST /api/local. */
+export interface LocalResult {
+  topic: LocalTopic;
+  /** Where the answer came from; "none" when the model was unavailable. */
+  source: "google-maps" | "google-search" | "none";
+  answer?: LocalAnswer;
+  /** A Google Maps search the user can open themselves, always present. */
+  searchUrl: string;
+  fallback?: Fallback;
+}
+
+export async function handleLocal(
+  body: z.infer<typeof LocalRequestSchema>,
+  o: { client?: GroundedClient } = {},
+): Promise<LocalResult> {
+  const { input, topic } = body;
+  const searchUrl = mapsSearchUrl(input, topic);
+  let error: unknown;
+  if (aiEnabled(o)) {
+    try {
+      const tool = toolFor(topic);
+      const { response } = await generateGrounded(tool, LOCAL_SYSTEM, localPrompt(input, topic), o.client);
+      const answer = toAnswer(response, tool);
+      // A grounded answer without a single source is not shown: it cannot be checked.
+      if (answer.text && answer.links.length) {
+        return { topic, source: tool === "googleMaps" ? "google-maps" : "google-search", answer, searchUrl };
+      }
+      error = new Error("Grounded answer had no sources");
+    } catch (e) {
+      error = e;
+    }
+  }
+  return { topic, source: "none", searchUrl, fallback: fallbackReason(o, error) };
+}
+
+export async function handleInvite(body: z.infer<typeof InviteRequestSchema>, o: Options = {}): Promise<InviteResult> {
+  const today = o.today ?? todayIn();
+  const { input, language, tone } = body;
+  let error: unknown;
+  if (aiEnabled(o)) {
+    try {
+      const by = rsvpBy(input, today);
+      const { data } = await generateJson(
+        InviteSchema,
+        INVITE_SYSTEM,
+        invitePrompt(input, language, tone, {
+          date: inviteDate(input.date, language),
+          time: inviteTime(input.startTime, language),
+          rsvpBy: by && inviteDate(by, language),
+        }),
+        o.client,
+      );
+      const text = cleanInvite(data.text);
+      if (text) return { text, source: "ai" };
+      error = new Error("Empty invite");
+    } catch (e) {
+      // Use the template below.
+      error = e;
+    }
+  }
+  return {
+    text: fallbackInvite(input, language, tone, today),
+    source: "rules",
+    fallback: fallbackReason(o, error),
+  };
 }

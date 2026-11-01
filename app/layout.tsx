@@ -1,12 +1,17 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces, Source_Sans_3 } from "next/font/google";
+import { Hanken_Grotesk, Source_Sans_3 } from "next/font/google";
 import Link from "next/link";
 import { connection } from "next/server";
 import { Icon } from "@/components/Icon";
 import { NavLinks } from "@/components/NavLinks";
 import "./globals.css";
 
-const fraunces = Fraunces({ subsets: ["latin"], weight: ["500", "600"], display: "swap", variable: "--font-fraunces" });
+const hanken = Hanken_Grotesk({
+  subsets: ["latin"],
+  weight: ["500", "600"],
+  display: "swap",
+  variable: "--font-hanken",
+});
 const source = Source_Sans_3({
   subsets: ["latin"],
   weight: ["400", "600"],
@@ -24,8 +29,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#fffcf7" },
-    { media: "(prefers-color-scheme: dark)", color: "#191613" },
+    { media: "(prefers-color-scheme: light)", color: "#f7f6f3" },
+    { media: "(prefers-color-scheme: dark)", color: "#141210" },
   ],
 };
 
@@ -33,7 +38,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // Render per request so Next can attach the CSP nonce from proxy.ts.
   await connection();
   return (
-    <html lang="en-IN" className={`${fraunces.variable} ${source.variable}`}>
+    <html lang="en-IN" className={`${hanken.variable} ${source.variable}`}>
       <body>
         <a className="skip" href="#main">
           Skip to content

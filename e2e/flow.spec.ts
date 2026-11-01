@@ -154,6 +154,75 @@ test("an unknown plan id shows a helpful message", async ({ page }) => {
   await expect(page.getByRole("link", { name: "Start a new plan" })).toBeVisible();
 });
 
+test("a plan opens at the top on a phone, not scrolled to the assistant", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openSample(page);
+  await expect(page.getByRole("heading", { name: "Ask the planner" })).toBeAttached();
+  await page.waitForTimeout(300);
+  expect(await page.evaluate(() => window.scrollY)).toBe(0);
+  await expect(page.getByRole("heading", { level: 1 })).toBeInViewport();
+});
+
+test("a three-day wedding gets its functions on their days", async ({ page }) => {
+  await page.goto("/plan/new");
+  await page.getByRole("radio", { name: /^Wedding/ }).check();
+  await page.getByLabel("Name of the event").fill("Meera and Kabir");
+  await page.getByRole("button", { name: /Continue/ }).click();
+  await page.getByRole("radio", { name: "3 days" }).check();
+  await page.getByRole("checkbox", { name: /^Mehendi/ }).check();
+  await page.getByRole("checkbox", { name: /^Reception/ }).check();
+  // The reception defaults to the last day; move the mehendi to day 2.
+  await page.getByLabel("Mehendi Day").selectOption("2");
+  await page.getByLabel("City or town").fill("Jaipur");
+  await page.getByRole("button", { name: /Continue/ }).click();
+  await page.getByLabel("Guests", { exact: true }).fill("300");
+  await page.getByLabel("Total budget (rupees)").fill("30 lakh");
+  await page.getByRole("button", { name: /Create my plan/ }).click();
+
+  await expect(page.getByText(/Wedding over 3 days from .*, Jaipur\. 2 functions\./)).toBeVisible();
+  const fns = page.getByRole("region", { name: "Functions" });
+  await expect(fns.getByText(/^Day 2, /)).toBeVisible();
+  await expect(fns.getByText(/^Day 3, /)).toBeVisible();
+  await page.getByRole("tab", { name: /Timeline/ }).click();
+  await expect(page.getByRole("heading", { name: /^Reception, / })).toBeVisible();
+});
+
+test("a budget line can be set with the slider", async ({ page }) => {
+  await openSample(page);
+  await page.getByRole("tab", { name: "Budget" }).click();
+  await page.getByRole("button", { name: "Edit Food and drinks" }).click();
+  const amount = page.getByLabel("New amount for Food and drinks");
+  const before = Number(await amount.inputValue());
+  await page.getByLabel("Amount for Food and drinks, slider").focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(amount).not.toHaveValue(String(before));
+  expect(Number(await amount.inputValue()) % 1000).toBe(0);
+  await page.getByRole("button", { name: "Save" }).click();
+  await expect(page.getByText("Fixed")).toBeVisible();
+});
+
+test("the invitation card renders and the local search offers a Maps link without an API key", async ({ page }) => {
+  await openSample(page);
+  await page.getByRole("tab", { name: /Guests/ }).click();
+  const card = page.getByRole("img", { name: /Riya and Arjun's wedding/ });
+  await expect(card).toBeVisible();
+  // The canvas has been drawn on: some pixel is not transparent.
+  const painted = await card.evaluate((c: HTMLCanvasElement) =>
+    c
+      .getContext("2d")!
+      .getImageData(540, 400, 1, 1)
+      .data.some((v) => v > 0),
+  );
+  expect(painted).toBe(true);
+  await expect(page.getByRole("button", { name: /Download image/ })).toBeVisible();
+
+  await page.getByRole("tab", { name: /Vendors/ }).click();
+  await page.getByRole("button", { name: "Caterers" }).click();
+  const link = page.getByRole("link", { name: /Search Google Maps in Dehradun/ });
+  await expect(link).toHaveAttribute("href", /^https:\/\/www\.google\.com\/maps\/search\/\?api=1&query=caterers/);
+  await expect(link).toHaveAttribute("rel", "noopener noreferrer");
+});
+
 test("an edit link for an unknown plan says so instead of starting a new plan", async ({ page }) => {
   await page.goto("/plan/new?edit=does-not-exist-123");
   await expect(page.getByRole("heading", { name: "Plan not found" })).toBeVisible();

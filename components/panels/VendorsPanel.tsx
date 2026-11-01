@@ -5,25 +5,29 @@ import { formatDate } from "@/lib/labels";
 import type { SavedPlan } from "@/lib/store";
 import styles from "../dashboard.module.css";
 import { StatusBadge } from "../feedback";
+import { LocalPicks } from "./LocalPicks";
 import { Card, toggle, type PanelProps } from "./shared";
 
 export function VendorsPanel({ plan, saved }: PanelProps) {
   const bookedCount = plan.vendors.filter((v) => saved.booked[v.id]).length;
   return (
-    <Card
-      title="Vendor checklist"
-      aside={
-        <span className="muted">
-          {bookedCount} of {plan.vendors.length} booked
-        </span>
-      }
-    >
-      <ul className={styles.list}>
-        {plan.vendors.map((v) => (
-          <VendorItem key={v.id} vendor={v} saved={saved} today={plan.today} />
-        ))}
-      </ul>
-    </Card>
+    <div className={styles.panelGrid}>
+      <LocalPicks input={plan.input} />
+      <Card
+        title="Vendor checklist"
+        aside={
+          <span className="muted">
+            {bookedCount} of {plan.vendors.length} booked
+          </span>
+        }
+      >
+        <ul className={styles.list}>
+          {plan.vendors.map((v) => (
+            <VendorItem key={v.id} vendor={v} saved={saved} today={plan.today} />
+          ))}
+        </ul>
+      </Card>
+    </div>
   );
 }
 

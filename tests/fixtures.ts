@@ -7,6 +7,8 @@ export function makeInput(overrides: Partial<EventInput> = {}): EventInput {
     type: "wedding",
     title: "Riya and Arjun's wedding",
     date: "2027-04-10",
+    days: 1,
+    functions: [],
     startTime: "18:00",
     city: "Dehradun",
     cityTier: "large",

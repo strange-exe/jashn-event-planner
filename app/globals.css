@@ -1,19 +1,30 @@
 :root {
   color-scheme: light dark;
-  --bg: #fffcf7;
+  --bg: #f7f6f3;
   --surface: #ffffff;
-  --surface-2: #f8f2e8;
-  --border: #ebe4d8;
-  --border-strong: #8a7f70;
-  --text: #22201c;
-  --muted: #5f584e;
-  --accent: #b9400b;
-  --accent-hover: #9c3509;
-  --accent-contrast: #ffffff;
-  --accent-soft: #fbe9dd;
-  --link: #a3380a;
+  --surface-2: #efede8;
+  --border: #e3e0da;
+  --border-strong: #857f77;
+  --text: #1d1b19;
+  --muted: #5d5852;
+  /* Saffron fill for the primary action, always with dark text. Never text on a light surface. */
+  --accent: #f3a73b;
+  --accent-hover: #e8961f;
+  --accent-contrast: #22150b;
+  --accent-soft: #fdf0dc;
+  /* The accent as ink: text, selection lines and bars on light surfaces. */
+  --accent-ink: #94580a;
+  /* Decorative marigold yellow: petals, the "due" ring segment. Never text. */
+  --marigold: #e8a12e;
+  --link: #94580a;
   --focus: #2457c5;
-  --track: #f1e9dc;
+  --track: #ebe8e2;
+  /* The dusk band (home scene, plan header) looks the same in both themes. */
+  --dusk: #1f1712;
+  --dusk-ink: #f6eee4;
+  --dusk-soft: #d9cbbb;
+  --dusk-line: #f6eee466;
+  --dusk-focus: #8fb2ff;
   --success: #1d6b3a;
   --success-bg: #e3f3e8;
   --warning: #84470a;
@@ -24,7 +35,7 @@
   --info-bg: #e8effb;
   --shadow: 0 1px 2px #0000000f, 0 4px 12px #0000000a;
 
-  --font-head: var(--font-fraunces), Georgia, serif;
+  --font-head: var(--font-hanken), system-ui, sans-serif;
   --font-body: var(--font-source), system-ui, sans-serif;
   --step--1: 0.875rem;
   --step-0: 1rem;
@@ -47,20 +58,22 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #191613;
-    --surface: #231f1b;
-    --surface-2: #2b2621;
-    --border: #3a332c;
-    --border-strong: #8f8478;
-    --text: #f5efe6;
-    --muted: #bdb3a6;
-    --accent: #f59a52;
-    --accent-hover: #f8ad6f;
-    --accent-contrast: #1a1410;
-    --accent-soft: #3a2a1d;
-    --link: #f8ad6f;
+    --bg: #141210;
+    --surface: #1d1a17;
+    --surface-2: #26221e;
+    --border: #34302b;
+    --border-strong: #8a8279;
+    --text: #f3eee8;
+    --muted: #b9b1a7;
+    --accent: #f3a73b;
+    --accent-hover: #f6b85c;
+    --accent-contrast: #22150b;
+    --accent-soft: #3a2a14;
+    --accent-ink: #f6b85c;
+    --marigold: #f2c14e;
+    --link: #f6b85c;
     --focus: #8fb2ff;
-    --track: #3a332c;
+    --track: #34302b;
     --success: #7fd69c;
     --success-bg: #1d3325;
     --warning: #f5c46b;
@@ -92,9 +105,9 @@ h1,
 h2,
 h3 {
   font-family: var(--font-head);
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1.15;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
   margin: 0;
   text-wrap: balance;
 }
@@ -194,7 +207,23 @@ main {
 }
 .brand-mark {
   display: inline-flex;
+  color: var(--accent-ink);
+}
+/* On the home page the header is part of the dusk scene below it. */
+body:has([data-dusk-hero]) .site-header {
+  background: var(--dusk);
+  border-bottom-color: transparent;
+  --focus: var(--dusk-focus);
+}
+body:has([data-dusk-hero]) .brand,
+body:has([data-dusk-hero]) .site-header .nav a {
+  color: var(--dusk-ink);
+}
+body:has([data-dusk-hero]) .brand-mark {
   color: var(--accent);
+}
+body:has([data-dusk-hero]) .site-header .nav a:hover {
+  background: #f6eee41a;
 }
 .nav {
   display: flex;
@@ -357,7 +386,7 @@ fieldset {
   cursor: pointer;
 }
 .choice:has(input:checked) {
-  border: 2px solid var(--accent);
+  border: 2px solid var(--accent-ink);
   background: var(--accent-soft);
   padding: calc(var(--space-2) - 1px) calc(var(--space-3) - 1px);
 }
@@ -456,7 +485,7 @@ fieldset {
 .bar > span {
   display: block;
   height: 100%;
-  background: var(--accent);
+  background: var(--accent-ink);
   border-radius: 4px;
 }
 

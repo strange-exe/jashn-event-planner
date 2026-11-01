@@ -1,5 +1,6 @@
 import { buildBudget, type Locks } from "./budget";
 import { daysBetween } from "./dates";
+import { buildFunctionRunSheet, buildFunctions } from "./functions";
 import { buildInsights } from "./insights";
 import { buildRunSheet, buildTasks } from "./timeline";
 import type { EventInput, Plan } from "./types";
@@ -14,12 +15,13 @@ export function buildPlan(input: EventInput, today: string, locks: Locks = {}): 
   const daysToGo = daysBetween(today, input.date);
   const budget = buildBudget(input, locks);
   const tasks = buildTasks(input, today, daysToGo);
-  const runSheet = buildRunSheet(input);
+  const runSheet = input.functions.length ? buildFunctionRunSheet(input) : buildRunSheet(input);
   return {
     input,
     today,
     daysToGo,
     budget,
+    functions: buildFunctions(input),
     tasks,
     runSheet,
     vendors: buildVendors(input, tasks),

@@ -44,6 +44,64 @@ function models(): string[] {
   return fromEnv?.length ? fromEnv : DEFAULT_MODELS;
 }
 
+/** The parts of a grounded answer this app reads. */
+export interface GroundedResponse {
+  text?: string;
+  candidates?: {
+    groundingMetadata?: {
+      groundingChunks?: { web?: { uri?: string; title?: string }; maps?: { uri?: string; title?: string } }[];
+      searchEntryPoint?: { renderedContent?: string };
+    };
+  }[];
+}
+
+export interface GroundedClient {
+  models: {
+    generateContent(req: {
+      model: string;
+      contents: string;
+      config: Record<string, unknown>;
+    }): Promise<GroundedResponse>;
+  };
+}
+
+export type GroundingTool = "googleMaps" | "googleSearch";
+
+/**
+ * Asks Gemini a question grounded on Google Maps or Google Search and returns the raw
+ * answer with its grounding metadata. No JSON schema: Maps grounding does not document
+ * structured output, and the terms require showing the grounded result as returned.
+ */
+export async function generateGrounded(
+  tool: GroundingTool,
+  system: string,
+  prompt: string,
+  client: GroundedClient = defaultClient() as unknown as GroundedClient,
+): Promise<{ response: GroundedResponse; model: string }> {
+  let lastError: unknown;
+  for (const model of models()) {
+    try {
+      const response = await client.models.generateContent({
+        model,
+        contents: prompt,
+        config: {
+          systemInstruction: system,
+          tools: [{ [tool]: {} }],
+          temperature: 0.4,
+          maxOutputTokens: 2048,
+          abortSignal: AbortSignal.timeout(TIMEOUT_MS),
+        },
+      });
+      if (response.text?.trim()) return { response, model };
+      lastError = new Error("Empty grounded answer");
+    } catch (e) {
+      lastError = e;
+      if (e instanceof ApiError && [400, 401, 403].includes(e.status)) break;
+    }
+  }
+  throw new AiUnavailableError(lastError instanceof Error ? lastError.message : "Model unavailable");
+}
+
 /**
  * Asks Gemini for JSON matching `schema` and validates the answer. Tries each
  * model in turn on overload or bad output; auth and request errors stop early

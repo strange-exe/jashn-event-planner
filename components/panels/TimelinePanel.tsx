@@ -1,7 +1,7 @@
 "use client";
 
-import type { Phase } from "@/lib/engine/types";
-import { PHASE_LABEL } from "@/lib/labels";
+import type { Phase, RunSheetItem } from "@/lib/engine/types";
+import { formatDate, FUNCTION_LABEL, PHASE_LABEL } from "@/lib/labels";
 import styles from "../dashboard.module.css";
 import { Card, TaskCheck, type PanelProps } from "./shared";
 
@@ -32,21 +32,38 @@ export function TimelinePanel({ plan, saved }: PanelProps) {
           );
         })}
       </Card>
-      <Card title="On the day">
-        <ol className={styles.runSheet}>
-          {plan.runSheet.map((s) => (
-            <li key={s.time + s.title}>
-              <span className="num">
-                <strong>{s.time}</strong>
-              </span>
-              <span className={styles.runSheetText}>
-                <strong>{s.title}</strong>
-                <span className="muted">{s.detail}</span>
-              </span>
-            </li>
-          ))}
-        </ol>
+      <Card title={plan.functions.length ? "Function by function" : "On the day"}>
+        {plan.functions.length ? (
+          plan.functions.map((f) => (
+            <section key={f.kind} className={styles.runGroup} aria-labelledby={`run-${f.kind}`}>
+              <h3 id={`run-${f.kind}`} className={styles.phase}>
+                {FUNCTION_LABEL[f.kind].name}, {formatDate(f.date)}
+              </h3>
+              <RunSheet items={plan.runSheet.filter((s) => s.function === f.kind)} />
+            </section>
+          ))
+        ) : (
+          <RunSheet items={plan.runSheet} />
+        )}
       </Card>
     </div>
+  );
+}
+
+function RunSheet({ items }: { items: RunSheetItem[] }) {
+  return (
+    <ol className={styles.runSheet}>
+      {items.map((s) => (
+        <li key={s.time + s.title}>
+          <span className="num">
+            <strong>{s.time}</strong>
+          </span>
+          <span className={styles.runSheetText}>
+            <strong>{s.title}</strong>
+            <span className="muted">{s.detail}</span>
+          </span>
+        </li>
+      ))}
+    </ol>
   );
 }

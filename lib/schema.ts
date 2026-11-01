@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { isValidDate } from "./engine/dates";
-import { CITY_TIERS, EVENT_TYPES, PREFERENCES, PRIORITIES, SETTINGS } from "./engine/types";
+import { CITY_TIERS, EVENT_TYPES, FUNCTION_KINDS, MAX_DAYS, PREFERENCES, PRIORITIES, SETTINGS } from "./engine/types";
 
 // Zod's JIT probes `new Function`, which the strict CSP blocks and reports. The
 // schemas are small, so the interpreter is fast enough.
@@ -22,6 +22,13 @@ export const LIMITS = {
   savedChat: 40,
   savedChatText: 2000,
   savedIdeas: 30,
+  savedGuests: 1000,
+  savedPayments: 300,
+  guestName: 60,
+  guestGroup: 40,
+  partySize: 20,
+  paymentLabel: 60,
+  invite: 1500,
   // Earlier chat turns sent with each assistant request.
   historyTurns: 6,
 } as const;
@@ -38,28 +45,51 @@ const text = (max: number) => z.string().transform(cleanText).pipe(z.string().ma
 const isoDate = z.string().refine(isValidDate, "Enter a real date (yyyy-mm-dd).");
 const timeOfDay = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Enter a time like 18:30.");
 
-export const EventInputSchema = z.object({
-  type: z.enum(EVENT_TYPES),
-  title: text(LIMITS.title).pipe(z.string().min(1, "Give the event a name.")),
-  date: isoDate,
+const EventFunctionSchema = z.object({
+  kind: z.enum(FUNCTION_KINDS),
+  day: z.number().int().min(1).max(MAX_DAYS),
   startTime: timeOfDay,
-  city: text(LIMITS.city).pipe(z.string().min(1, "Enter a city or town.")),
-  cityTier: z.enum(CITY_TIERS),
-  guests: z.number().int().min(LIMITS.guests.min).max(LIMITS.guests.max),
-  budget: z.number().int().min(LIMITS.budget.min).max(LIMITS.budget.max),
-  setting: z.enum(SETTINGS),
-  venueBooked: z.boolean(),
-  priorities: z
-    .array(z.enum(PRIORITIES))
-    .max(LIMITS.priorities)
-    .refine((p) => new Set(p).size === p.length, "Priorities must be different."),
-  preferences: z
-    .array(z.enum(PREFERENCES))
-    .max(PREFERENCES.length)
-    .transform((p) => [...new Set(p)]),
-  style: text(LIMITS.style),
-  notes: text(LIMITS.notes),
+  guests: z.number().int().min(LIMITS.guests.min).max(LIMITS.guests.max).optional(),
 });
+
+export const EventInputSchema = z
+  .object({
+    type: z.enum(EVENT_TYPES),
+    title: text(LIMITS.title).pipe(z.string().min(1, "Give the event a name.")),
+    date: isoDate,
+    // Plans saved before multi-day weddings have neither field.
+    days: z.number().int().min(1).max(MAX_DAYS).default(1),
+    functions: z.array(EventFunctionSchema).max(FUNCTION_KINDS.length).default([]),
+    startTime: timeOfDay,
+    city: text(LIMITS.city).pipe(z.string().min(1, "Enter a city or town.")),
+    cityTier: z.enum(CITY_TIERS),
+    guests: z.number().int().min(LIMITS.guests.min).max(LIMITS.guests.max),
+    budget: z.number().int().min(LIMITS.budget.min).max(LIMITS.budget.max),
+    setting: z.enum(SETTINGS),
+    venueBooked: z.boolean(),
+    priorities: z
+      .array(z.enum(PRIORITIES))
+      .max(LIMITS.priorities)
+      .refine((p) => new Set(p).size === p.length, "Priorities must be different."),
+    preferences: z
+      .array(z.enum(PREFERENCES))
+      .max(PREFERENCES.length)
+      .transform((p) => [...new Set(p)]),
+    style: text(LIMITS.style),
+    notes: text(LIMITS.notes),
+  })
+  .superRefine((input, ctx) => {
+    const kinds = new Set<string>();
+    for (const [i, f] of input.functions.entries()) {
+      if (kinds.has(f.kind)) ctx.addIssue({ code: "custom", path: ["functions", i], message: "Each function once." });
+      kinds.add(f.kind);
+      if (f.day > input.days) {
+        ctx.addIssue({ code: "custom", path: ["functions", i], message: "A function falls after the last day." });
+      }
+      // A function with more guests than the event is capped by the engine, not rejected:
+      // the guest count is asked after the functions, and the assistant can lower it later.
+    }
+  });
 
 // A change the assistant may propose. The model gets this flat shape (easy for
 // structured output); `toChange` turns it into a checked, typed change.

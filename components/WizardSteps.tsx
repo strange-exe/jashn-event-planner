@@ -1,21 +1,33 @@
 "use client";
 
-import { daysBetween } from "@/lib/engine/dates";
-import type { Draft } from "@/lib/draft";
+import { addDays, daysBetween, isValidDate } from "@/lib/engine/dates";
+import { hasFunctions, type Draft, type DraftFunction } from "@/lib/draft";
 import { formatINR, parseAmount } from "@/lib/engine/money";
 import { PLATE_COST } from "@/lib/engine/costs";
 import {
   CITY_TIERS,
   EVENT_TYPES,
+  FUNCTION_KINDS,
+  MAX_DAYS,
   PREFERENCES,
   PRIORITIES,
   SETTINGS,
   type EventInput,
+  type FunctionKind,
   type Preference,
   type Priority,
 } from "@/lib/engine/types";
-import { EVENT_LABEL, PREFERENCE_LABEL, PRIORITY_LABEL, SETTING_LABEL, TIER_LABEL } from "@/lib/labels";
+import {
+  EVENT_LABEL,
+  formatDate,
+  FUNCTION_LABEL,
+  PREFERENCE_LABEL,
+  PRIORITY_LABEL,
+  SETTING_LABEL,
+  TIER_LABEL,
+} from "@/lib/labels";
 import { LIMITS } from "@/lib/schema";
+import { FieldError } from "./feedback";
 import { Choice, RadioGroup, TextField } from "./fields";
 import styles from "./wizard.module.css";
 
@@ -56,30 +68,68 @@ export function OccasionStep({ draft, set, err, uid }: StepProps) {
   );
 }
 
+// Where each function usually falls: its time, and its day counted from the first (1)
+// or, for the wedding and reception, from the last.
+const FUNCTION_DEFAULTS: Record<FunctionKind, { time: string; day: (days: number) => number }> = {
+  haldi: { time: "10:00", day: () => 1 },
+  mehendi: { time: "16:00", day: () => 1 },
+  sangeet: { time: "19:00", day: (d) => Math.min(2, d) },
+  cocktail: { time: "20:00", day: (d) => Math.min(2, d) },
+  wedding: { time: "18:00", day: (d) => d },
+  reception: { time: "19:30", day: (d) => d },
+};
+
 export function WhenWhereStep({ draft, set, err, uid, today }: StepProps) {
-  const days = draft.date >= today ? daysBetween(today, draft.date) : null;
+  const away = draft.date >= today ? daysBetween(today, draft.date) : null;
+  const multi = hasFunctions(draft.type);
+  const withFunctions = multi && draft.functions.length > 0;
+
+  const setDays = (days: number) => {
+    set("days", days);
+    set(
+      "functions",
+      draft.functions.map((f) => ({ ...f, day: Math.min(f.day, days) })),
+    );
+  };
+
   return (
     <>
+      {multi && (
+        <RadioGroup
+          label="How many days?"
+          hint="Haldi, mehendi and sangeet often fall on the days before the wedding."
+          name="days"
+          options={Array.from({ length: MAX_DAYS }, (_, i) => ({
+            value: String(i + 1),
+            label: i === 0 ? "1 day" : `${i + 1} days`,
+          }))}
+          value={String(draft.days)}
+          onChange={(v) => setDays(Number(v))}
+        />
+      )}
       <div className={styles.two}>
         <TextField
           id={`${uid}-date`}
           type="date"
-          label="Date"
+          label={multi && draft.days > 1 ? "First day" : "Date"}
           value={draft.date}
           min={today}
           error={err("date")}
           onChange={(v) => set("date", v)}
-          hint={days !== null ? `${days} days from today` : undefined}
+          hint={away !== null ? `${away} days from today` : undefined}
         />
-        <TextField
-          id={`${uid}-time`}
-          type="time"
-          label="Start time"
-          value={draft.startTime}
-          error={err("startTime")}
-          onChange={(v) => set("startTime", v)}
-        />
+        {!withFunctions && (
+          <TextField
+            id={`${uid}-time`}
+            type="time"
+            label="Start time"
+            value={draft.startTime}
+            error={err("startTime")}
+            onChange={(v) => set("startTime", v)}
+          />
+        )}
       </div>
+      {multi && <FunctionsField draft={draft} set={set} err={err} uid={uid} today={today} />}
       <TextField
         id={`${uid}-city`}
         label="City or town"
@@ -109,6 +159,101 @@ export function WhenWhereStep({ draft, set, err, uid, today }: StepProps) {
         <small>Its cost will be left out of the budget.</small>
       </Choice>
     </>
+  );
+}
+
+/** Pick the functions of a wedding and place each on a day and time. */
+function FunctionsField({ draft, set, err, uid }: StepProps) {
+  const find = (k: FunctionKind) => draft.functions.find((f) => f.kind === k);
+  const toggle = (k: FunctionKind) =>
+    set(
+      "functions",
+      find(k)
+        ? draft.functions.filter((f) => f.kind !== k)
+        : [
+            ...draft.functions,
+            { kind: k, day: FUNCTION_DEFAULTS[k].day(draft.days), startTime: FUNCTION_DEFAULTS[k].time, guests: "" },
+          ],
+    );
+  const patch = (k: FunctionKind, change: Partial<DraftFunction>) =>
+    set(
+      "functions",
+      draft.functions.map((f) => (f.kind === k ? { ...f, ...change } : f)),
+    );
+  const dayLabel = (d: number) =>
+    draft.days > 1 && isValidDate(draft.date) ? `Day ${d}, ${formatDate(addDays(draft.date, d - 1))}` : `Day ${d}`;
+  const error = err("functions");
+
+  return (
+    <fieldset className="field" aria-describedby={error ? `${uid}-fn-error` : undefined}>
+      <legend>
+        Functions{" "}
+        <span className="hint">Pick the ones you are hosting. Leave all unticked for a single gathering.</span>
+      </legend>
+      <ul className={styles.functions}>
+        {FUNCTION_KINDS.map((k) => {
+          const f = find(k);
+          const name = FUNCTION_LABEL[k].name;
+          return (
+            <li key={k}>
+              <Choice type="checkbox" checked={Boolean(f)} onChange={() => toggle(k)}>
+                {name}
+                <small>{FUNCTION_LABEL[k].hint}</small>
+              </Choice>
+              {f && (
+                <div className={styles.functionRow}>
+                  {draft.days > 1 && (
+                    <div className="field">
+                      <label htmlFor={`${uid}-${k}-day`}>
+                        <span className="sr-only">{name} </span>Day
+                      </label>
+                      <select
+                        id={`${uid}-${k}-day`}
+                        className="input"
+                        value={f.day}
+                        onChange={(e) => patch(k, { day: Number(e.target.value) })}
+                      >
+                        {Array.from({ length: draft.days }, (_, i) => (
+                          <option key={i} value={i + 1}>
+                            {dayLabel(i + 1)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                  <div className="field">
+                    <label htmlFor={`${uid}-${k}-time`}>
+                      <span className="sr-only">{name} </span>Starts
+                    </label>
+                    <input
+                      id={`${uid}-${k}-time`}
+                      type="time"
+                      className="input"
+                      value={f.startTime}
+                      onChange={(e) => patch(k, { startTime: e.target.value })}
+                    />
+                  </div>
+                  <div className="field">
+                    <label htmlFor={`${uid}-${k}-guests`}>
+                      <span className="sr-only">{name} </span>Guests
+                    </label>
+                    <input
+                      id={`${uid}-${k}-guests`}
+                      className="input"
+                      inputMode="numeric"
+                      placeholder="Everyone"
+                      value={f.guests}
+                      onChange={(e) => patch(k, { guests: e.target.value.replace(/[^\d]/g, "") })}
+                    />
+                  </div>
+                </div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+      {error && <FieldError id={`${uid}-fn-error`}>{error}</FieldError>}
+    </fieldset>
   );
 }
 

@@ -1,43 +1,167 @@
-.hero {
+/* The dusk scene: full bleed, the same colours in both themes. The canvas draws the
+   carved doorway around .door, so the text always sits in the opening. */
+.band {
+  position: relative;
+  isolation: isolate;
   display: grid;
-  gap: var(--space-6);
-  padding: var(--space-7) 0 var(--space-7);
-  align-items: center;
+  justify-items: center;
+  /* Top room for the carved lintel, which stands up to 76 px above the door at full scale. */
+  padding: clamp(48px, 6.5vw, 96px) var(--space-4) 168px;
+  background: var(--dusk);
+  color: var(--dusk-ink);
+  --focus: var(--dusk-focus);
 }
-@media (min-width: 900px) {
-  .hero {
-    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
-    gap: var(--space-8);
-    padding-top: var(--space-8);
-  }
+/* The floor fades into the page, so the scene has no hard bottom edge. */
+.band::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 120px;
+  background: linear-gradient(transparent, var(--bg));
+  pointer-events: none;
 }
-.copy {
+.door {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 520px);
+  /* The top 112 px is the toran's: the strands hang over it, never over the text. */
+  padding: 112px var(--space-6) var(--space-7);
   display: grid;
-  gap: var(--space-5);
+  justify-items: center;
+  gap: var(--space-4);
+  text-align: center;
 }
 .title {
   font-size: var(--step-hero);
-  font-weight: 600;
-  max-width: 16ch;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  max-width: 14ch;
 }
 .lede {
-  font-size: var(--step-1);
-  line-height: 1.5;
-  color: var(--muted);
-  max-width: 46ch;
+  max-width: 36ch;
+  color: var(--dusk-soft);
+  font-size: 1.0625rem;
+}
+.ctas {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+.primary {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+.primary:hover {
+  background: var(--accent-hover);
+}
+.secondary {
+  color: var(--dusk-ink);
+  border-color: var(--dusk-line);
+}
+.secondary:hover {
+  background: #f6eee41a;
+}
+@media (max-width: 599px) {
+  .door {
+    padding-inline: var(--space-4);
+  }
+  .ctas {
+    display: grid;
+    width: min(100%, 280px);
+  }
 }
 
+/* The sample plan rises out of the scene: a dusk header like a real plan page. */
 .preview {
-  display: grid;
-  gap: var(--space-4);
-  margin: 0;
+  position: relative;
+  z-index: 1;
+  margin-top: -56px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  box-shadow:
+    0 1px 2px #2a1c1014,
+    0 12px 28px #2a1c1012;
+  overflow: hidden;
 }
 .previewHead {
-  display: grid;
-  gap: 2px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: end;
+  gap: var(--space-4) var(--space-5);
+  padding: var(--space-5);
+  background: var(--dusk);
+  color: var(--dusk-ink);
 }
-.previewHead strong {
-  font: 600 var(--step-1) / 1.2 var(--font-head);
+.previewName {
+  display: grid;
+  gap: var(--space-1);
+}
+.previewMeta {
+  color: var(--dusk-soft);
+  font-size: var(--step--1);
+}
+.count {
+  display: grid;
+  justify-items: end;
+  font: 500 clamp(2.5rem, 3vw + 1.5rem, 3.25rem) / 1 var(--font-head);
+  letter-spacing: -0.02em;
+  color: var(--accent);
+}
+.countWords {
+  font: 400 var(--step--1) / 1.4 var(--font-body);
+  letter-spacing: 0;
+  color: var(--dusk-soft);
+}
+.stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+  border-bottom: 1px solid var(--border);
+}
+.stats > div {
+  padding: var(--space-4) var(--space-5);
+}
+.stats > div:nth-child(odd) {
+  border-right: 1px solid var(--border);
+}
+.stats > div:nth-child(n + 3) {
+  border-top: 1px solid var(--border);
+}
+@media (min-width: 768px) {
+  .stats {
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+  }
+  .stats > div,
+  .stats > div:nth-child(n + 3) {
+    border-top: 0;
+    border-right: 1px solid var(--border);
+  }
+  .stats > div:last-child {
+    border-right: 0;
+  }
+}
+.stats dt {
+  font-size: var(--step--1);
+  color: var(--muted);
+}
+.stats dd {
+  margin: var(--space-1) 0 0;
+  font: 500 var(--step-2) / 1.2 var(--font-head);
+}
+.previewBody {
+  display: grid;
+  gap: var(--space-5);
+  padding: var(--space-5);
+}
+@media (min-width: 900px) {
+  .previewBody {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    gap: var(--space-7);
+  }
 }
 .lines {
   display: grid;
@@ -49,9 +173,6 @@
   grid-template-columns: minmax(0, 1fr) auto;
   gap: var(--space-1) var(--space-3);
 }
-.line dt {
-  color: var(--text);
-}
 .line dd {
   margin: 0;
   font-weight: 600;
@@ -59,49 +180,61 @@
 .line :global(.bar) {
   grid-column: 1 / -1;
 }
+.next {
+  display: grid;
+  gap: var(--space-4);
+  align-content: start;
+}
 .flag {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
   align-items: center;
-  padding-top: var(--space-3);
-  border-top: 1px solid var(--border);
 }
 
-.how {
+/* Text sections: the heading column on the left, hairline rows on the right. */
+.split {
   display: grid;
   gap: var(--space-5);
-  padding-top: var(--space-6);
-  border-top: 1px solid var(--border);
+  padding-top: var(--space-8);
 }
-.steps {
+@media (min-width: 900px) {
+  .split {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
+    gap: var(--space-8);
+  }
+}
+.splitHead {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+  max-width: 44ch;
+}
+.rows {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  gap: var(--space-5);
-  max-width: 760px;
 }
-.steps li {
+.rows > * {
   display: grid;
-  grid-template-columns: 40px minmax(0, 1fr);
-  gap: var(--space-4);
-  align-items: start;
+  gap: var(--space-1) var(--space-6);
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--border);
 }
-.steps h3 {
-  margin-bottom: var(--space-1);
+.rows > *:last-child {
+  border-bottom: 1px solid var(--border);
 }
-.stepNum {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  font: 600 var(--step-1) / 1 var(--font-head);
-  background: var(--accent-soft);
-  color: var(--text);
+@media (min-width: 600px) {
+  .rows > * {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  }
 }
-.trust {
-  max-width: 64ch;
-  color: var(--muted);
+.rows h3,
+.rows dt {
+  font: 500 var(--step-1) / 1.3 var(--font-head);
+}
+.rows p,
+.rows dd {
+  margin: 0;
 }
