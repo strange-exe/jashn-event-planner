@@ -3,6 +3,9 @@ import { addDays, addMinutes, daysBetween, isValidDate } from "@/lib/engine/date
 import { formatCompactINR, parseAmount } from "@/lib/engine/money";
 import { buildPlan } from "@/lib/engine/plan";
 import { buildTasks } from "@/lib/engine/timeline";
+import { formatDate } from "@/lib/labels";
+import { sampleWedding } from "@/lib/sample";
+import { EventInputSchema } from "@/lib/schema";
 import { makeInput, TODAY } from "./fixtures";
 
 const ids = (xs: { id: string }[]) => xs.map((x) => x.id);
@@ -123,6 +126,13 @@ describe("helpers", () => {
   it("formats compact rupees", () => {
     expect(formatCompactINR(440_000)).toMatch(/4\.4 L$/);
     expect(formatCompactINR(12_000_000)).toMatch(/1\.2 Cr$/);
+    expect(formatCompactINR(85_000)).toMatch(/85 K$/);
+    expect(formatCompactINR(900)).toMatch(/900$/);
+  });
+
+  it("formats dates the same in every time zone", () => {
+    // Punctuation varies by ICU version; the weekday and day must not shift with the host's time zone.
+    expect(formatDate("2027-04-10")).toMatch(/^Sat, 10 Apr,? 2027$/);
   });
 
   it("handles dates and times", () => {
@@ -130,5 +140,16 @@ describe("helpers", () => {
     expect(daysBetween("2026-11-01", "2026-12-01")).toBe(30);
     expect(addMinutes("23:30", 90)).toBe("01:00");
     expect(addMinutes("01:00", -120)).toBe("23:00");
+  });
+});
+
+describe("sample wedding", () => {
+  it("is valid input whose plan adds up and is not over budget", () => {
+    const sample = sampleWedding(TODAY);
+    expect(EventInputSchema.safeParse(sample).success).toBe(true);
+    expect(sample.date).toBe(addDays(TODAY, 240));
+    const plan = buildPlan(sample, TODAY);
+    expect(plan.budget.lines.reduce((s, l) => s + l.amount, 0)).toBe(sample.budget);
+    expect(plan.insights.map((i) => i.id)).not.toContain("over-budget");
   });
 });

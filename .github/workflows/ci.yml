@@ -21,7 +21,8 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm run format:check
       - run: npm run lint
-      - run: npm test
+      # Unit tests with coverage; fails if lib/ drops below the thresholds in vitest.config.mts.
+      - run: npm run test:coverage
       # No API key in CI: the app uses the rule engine, so tests never call a model.
       - run: npm run build
       - run: npm run typecheck
