@@ -153,3 +153,9 @@ test("an unknown plan id shows a helpful message", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Plan not found" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Start a new plan" })).toBeVisible();
 });
+
+test("an edit link for an unknown plan says so instead of starting a new plan", async ({ page }) => {
+  await page.goto("/plan/new?edit=does-not-exist-123");
+  await expect(page.getByRole("heading", { name: "Plan not found" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Continue" })).toHaveCount(0);
+});

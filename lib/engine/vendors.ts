@@ -1,26 +1,30 @@
+import { hasPreference as has, isPublicEvent, needsAttire } from "./rules";
+import type { TaskId } from "./timeline";
 import type { BudgetCategory, EventInput, LogisticsItem, Task, Vendor } from "./types";
 
 interface VendorTemplate {
   id: string;
   name: string;
   category: BudgetCategory;
-  /** Task whose due date is the booking deadline. */
-  task: string;
+  /** Tasks whose due date is the booking deadline, in order of preference (the first one in the plan wins). */
+  bookBy: TaskId[];
   when?: (i: EventInput) => boolean;
   questions: (i: EventInput) => string[];
   why: string;
 }
 
-const has = (i: EventInput, p: EventInput["preferences"][number]) => i.preferences.includes(p);
+// Above this headcount, or for any public event, crowd safety and sanitation need a vendor.
+const LARGE_EVENT_GUESTS = 300;
+
 const isOneOf = (i: EventInput, ...types: EventInput["type"][]) => types.includes(i.type);
-const large = (i: EventInput) => i.guests > 300 || isOneOf(i, "community", "festival");
+const isLarge = (i: EventInput) => i.guests > LARGE_EVENT_GUESTS || isPublicEvent(i);
 
 const TEMPLATES: VendorTemplate[] = [
   {
     id: "venue",
     name: "Venue",
     category: "venue",
-    task: "venue",
+    bookBy: ["venue"],
     when: (i) => !i.venueBooked,
     questions: (i) => [
       `Does it seat ${i.guests} guests comfortably, and what is the standing capacity?`,
@@ -36,7 +40,7 @@ const TEMPLATES: VendorTemplate[] = [
     id: "caterer",
     name: "Caterer",
     category: "catering",
-    task: "caterer",
+    bookBy: ["caterer"],
     questions: (i) => [
       "What is the per-plate price, and what is the minimum guaranteed count?",
       "Can we do a tasting before confirming the menu?",
@@ -51,7 +55,7 @@ const TEMPLATES: VendorTemplate[] = [
     id: "decorator",
     name: "Decorator",
     category: "decor",
-    task: "decor",
+    bookBy: ["decor"],
     questions: (i) => [
       `Can you share a mock-up for the theme "${i.style || "to be decided"}"?`,
       "How long do setup and teardown take?",
@@ -64,7 +68,7 @@ const TEMPLATES: VendorTemplate[] = [
     id: "photographer",
     name: "Photographer",
     category: "photography",
-    task: "photo",
+    bookBy: ["photo"],
     questions: () => [
       "What do we receive, and how soon after the event?",
       "How many photographers or videographers will come?",
@@ -76,7 +80,7 @@ const TEMPLATES: VendorTemplate[] = [
     id: "entertainment",
     name: "Music and entertainment",
     category: "entertainment",
-    task: "entertainment",
+    bookBy: ["entertainment"],
     questions: (i) => [
       isOneOf(i, "birthday") && has(i, "kidsFriendly")
         ? "Do you have a children's entertainer (magician, games host) for the age group?"
@@ -90,8 +94,8 @@ const TEMPLATES: VendorTemplate[] = [
     id: "attire",
     name: "Designer or tailor",
     category: "attire",
-    task: "attire",
-    when: (i) => isOneOf(i, "wedding", "engagement") || i.priorities.includes("attire"),
+    bookBy: ["attire"],
+    when: needsAttire,
     questions: () => ["How many fittings are included?", "What is the delivery date, with a buffer for alterations?"],
     why: "Outfits need fittings and alterations.",
   },
@@ -99,7 +103,7 @@ const TEMPLATES: VendorTemplate[] = [
     id: "makeup",
     name: "Make-up artist",
     category: "attire",
-    task: "attire",
+    bookBy: ["attire"],
     when: (i) => isOneOf(i, "wedding", "engagement"),
     questions: () => [
       "Can we book a trial session?",
@@ -111,7 +115,7 @@ const TEMPLATES: VendorTemplate[] = [
     id: "officiant",
     name: "Priest or officiant (if your traditions need one)",
     category: "entertainment",
-    task: "venue-or-caterer",
+    bookBy: ["venue", "venue-confirm", "caterer"],
     when: (i) => isOneOf(i, "wedding", "engagement", "festival"),
     questions: () => ["Which items should we arrange for the ritual?", "How long does the ceremony take?"],
     why: "Many ceremonies need someone to lead the rituals; skip it if yours does not.",
@@ -120,7 +124,7 @@ const TEMPLATES: VendorTemplate[] = [
     id: "cake",
     name: "Baker",
     category: "catering",
-    task: "menu",
+    bookBy: ["menu"],
     when: (i) => isOneOf(i, "birthday", "anniversary"),
     questions: (i) => [
       `Can you make a cake that serves ${i.guests} guests?`,
@@ -132,7 +136,7 @@ const TEMPLATES: VendorTemplate[] = [
     id: "invitations",
     name: "Invitation printer or designer",
     category: "invitations",
-    task: "invites",
+    bookBy: ["invites"],
     questions: (i) => [
       "Can we get a digital version for WhatsApp as well as print?",
       ...(has(i, "ecoFriendly") ? ["Do you offer seed paper or digital-only invitations?"] : []),
@@ -143,7 +147,7 @@ const TEMPLATES: VendorTemplate[] = [
     id: "tent",
     name: "Tent, power and generator",
     category: "logistics",
-    task: "tent",
+    bookBy: ["tent"],
     when: (i) => i.setting === "outdoor",
     questions: () => [
       "Is the tent rated for rain and wind?",
@@ -156,8 +160,8 @@ const TEMPLATES: VendorTemplate[] = [
     id: "safety",
     name: "Security and first aid",
     category: "permits",
-    task: "permits-or-caterer",
-    when: large,
+    bookBy: ["permits", "caterer"],
+    when: isLarge,
     questions: (i) => [
       `How many guards do you recommend for ${i.guests} guests?`,
       "Can a first-aid desk and an ambulance on call be arranged?",
@@ -169,8 +173,8 @@ const TEMPLATES: VendorTemplate[] = [
     id: "sanitation",
     name: "Sanitation and waste management",
     category: "logistics",
-    task: "eco-or-caterer",
-    when: (i) => large(i) || has(i, "ecoFriendly"),
+    bookBy: ["eco", "caterer"],
+    when: (i) => isLarge(i) || has(i, "ecoFriendly"),
     questions: () => [
       "Can you provide separate wet and dry waste bins?",
       "Will you clean up and dispose of waste after the event?",
@@ -181,110 +185,131 @@ const TEMPLATES: VendorTemplate[] = [
 
 /** Picks the vendors this event needs, each with a booking deadline taken from the timeline. */
 export function buildVendors(input: EventInput, tasks: Task[]): Vendor[] {
-  const due = (taskRef: string) => {
-    for (const id of taskRef.split("-or-")) {
-      const t = tasks.find((x) => x.id === id || (id === "venue" && x.id === "venue-confirm"));
-      if (t) return t.due;
+  const dueOf = (ids: TaskId[]) => {
+    for (const id of ids) {
+      const task = tasks.find((t) => t.id === id);
+      if (task) return task.due;
     }
+    // None of the tasks is in the plan (they were already past): book as soon as possible.
     return tasks[0]?.due ?? input.date;
   };
   return TEMPLATES.filter((v) => !v.when || v.when(input)).map((v) => ({
     id: v.id,
     name: v.name,
     category: v.category,
-    bookBy: due(v.task),
+    bookBy: dueOf(v.bookBy),
     questions: v.questions(input),
     why: v.why,
   }));
 }
 
+// Rules of thumb behind the quantities. The explanations are built from the same
+// numbers, so the text can never disagree with the maths.
+const THUMB = {
+  spareShare: 0.05,
+  publicSeatedShare: 0.6,
+  seatsPerTable: 8,
+  guestsPerServer: 25,
+  waterLitresPerGuest: { indoor: 0.5, outdoor: 0.75 },
+  eventHours: 4,
+  guestsPerCar: 3,
+  guestsPerToilet: 75,
+  guestsPerVolunteer: 40,
+  servingsPerCakeKg: 10,
+  guestsPerBinPair: 50,
+  binsFromGuests: 150,
+} as const;
+
+const percent = (share: number) => `${Math.round(share * 100)}%`;
+
 /** Quantities derived from the headcount. All are rules of thumb, shown with their reasoning. */
 export function buildLogistics(input: EventInput): LogisticsItem[] {
   const g = input.guests;
-  const seated = isOneOf(input, "community", "festival") ? Math.ceil(g * 0.6) : Math.ceil(g * 1.05);
+  const outdoor = input.setting === "outdoor";
+  const withSpare = Math.ceil(g * (1 + THUMB.spareShare));
+  const seated = isPublicEvent(input) ? Math.ceil(g * THUMB.publicSeatedShare) : withSpare;
+  const water = THUMB.waterLitresPerGuest[outdoor ? "outdoor" : "indoor"];
+
   const items: LogisticsItem[] = [
     {
       id: "plates",
       label: "Plates to order",
-      quantity: Math.ceil(g * 1.05),
+      quantity: withSpare,
       unit: "plates",
-      why: "Your guest count plus 5%, a common caterer buffer for unexpected guests.",
+      why: `Your guest count plus ${percent(THUMB.spareShare)}, a common caterer buffer for unexpected guests.`,
     },
     {
       id: "seats",
       label: "Chairs",
       quantity: seated,
       unit: "chairs",
-      why: isOneOf(input, "community", "festival")
-        ? "About 60% of guests sit at once at public events; the rest move around."
-        : "Every guest gets a seat, plus 5% spare.",
+      why: isPublicEvent(input)
+        ? `About ${percent(THUMB.publicSeatedShare)} of guests sit at once at public events; the rest move around.`
+        : `Every guest gets a seat, plus ${percent(THUMB.spareShare)} spare.`,
     },
     {
       id: "tables",
-      label: "Dining tables (8 seats each)",
-      quantity: Math.ceil(seated / 8),
+      label: `Dining tables (${THUMB.seatsPerTable} seats each)`,
+      quantity: Math.ceil(seated / THUMB.seatsPerTable),
       unit: "tables",
-      why: "Round tables usually seat 8.",
+      why: `Round tables usually seat ${THUMB.seatsPerTable}.`,
     },
     {
       id: "staff",
       label: "Serving staff",
-      quantity: Math.max(2, Math.ceil(g / 25)),
+      quantity: Math.max(2, Math.ceil(g / THUMB.guestsPerServer)),
       unit: "people",
-      why: "About one server per 25 guests for buffet service.",
+      why: `About one server per ${THUMB.guestsPerServer} guests for buffet service.`,
     },
     {
       id: "water",
       label: "Drinking water",
-      quantity: Math.ceil(g * (input.setting === "outdoor" ? 0.75 : 0.5)),
+      quantity: Math.ceil(g * water),
       unit: "litres",
-      why:
-        input.setting === "outdoor"
-          ? "About 0.75 L per guest outdoors over a 4-hour event."
-          : "About 0.5 L per guest over a 4-hour event.",
+      why: `About ${water} L per guest${outdoor ? " outdoors" : ""} over a ${THUMB.eventHours}-hour event.`,
     },
     {
       id: "parking",
       label: "Parking spaces",
-      quantity: Math.ceil(g / 3),
+      quantity: Math.ceil(g / THUMB.guestsPerCar),
       unit: "cars",
-      why: "Assumes about 3 guests per car.",
+      why: `Assumes about ${THUMB.guestsPerCar} guests per car.`,
     },
   ];
-  if (input.setting === "outdoor" || isOneOf(input, "community", "festival")) {
+  if (outdoor || isPublicEvent(input)) {
     items.push({
       id: "toilets",
       label: "Restrooms or portable toilets",
-      quantity: Math.max(2, Math.ceil(g / 75)),
+      quantity: Math.max(2, Math.ceil(g / THUMB.guestsPerToilet)),
       unit: "units",
-      why: "Roughly one per 75 guests, with at least two.",
+      why: `Roughly one per ${THUMB.guestsPerToilet} guests, with at least two.`,
     });
   }
-  if (isOneOf(input, "community", "festival")) {
+  if (isPublicEvent(input)) {
     items.push({
       id: "volunteers",
       label: "Volunteers",
-      quantity: Math.max(4, Math.ceil(g / 40)),
+      quantity: Math.max(4, Math.ceil(g / THUMB.guestsPerVolunteer)),
       unit: "people",
-      why: "About one volunteer per 40 guests for entry, queues and help desks.",
+      why: `About one volunteer per ${THUMB.guestsPerVolunteer} guests for entry, queues and help desks.`,
     });
   }
   if (isOneOf(input, "birthday", "anniversary")) {
     items.push({
       id: "cake",
       label: "Cake size",
-      quantity: Math.max(1, Math.ceil(g / 10)),
+      quantity: Math.max(1, Math.ceil(g / THUMB.servingsPerCakeKg)),
       unit: "kg",
-      why: "About 10 servings per kilogram.",
+      why: `About ${THUMB.servingsPerCakeKg} servings per kilogram.`,
     });
   }
-  if (input.preferences.includes("ecoFriendly") || g > 150) {
+  if (has(input, "ecoFriendly") || g > THUMB.binsFromGuests) {
     items.push({
       id: "bins",
       label: "Waste bin pairs (wet and dry)",
-      quantity: Math.max(2, Math.ceil(g / 50)),
+      quantity: Math.max(2, Math.ceil(g / THUMB.guestsPerBinPair)),
       unit: "pairs",
-      why: "One pair per 50 guests keeps waste sorted at the source.",
+      why: `One pair per ${THUMB.guestsPerBinPair} guests keeps waste sorted at the source.`,
     });
   }
   return items;

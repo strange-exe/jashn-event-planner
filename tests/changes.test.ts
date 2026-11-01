@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { applyChanges, describeChange } from "@/lib/engine/changes";
 import { parseIntent } from "@/lib/engine/intent";
 import type { EventInput } from "@/lib/engine/types";
-import { cleanText, EventInputSchema, LIMITS, toChange, type Change } from "@/lib/schema";
+import { CHANGE_OPS, ChangeSchema, cleanText, EventInputSchema, LIMITS, toChange, type Change } from "@/lib/schema";
 import { makeInput } from "./fixtures";
 
 describe("parseIntent", () => {
@@ -75,11 +75,15 @@ describe("applyChanges", () => {
     [{ op: "setGuests", value: 80 }, { guests: 80 }, /^Set guests to 80$/],
     [{ op: "addGuests", value: 30 }, { guests: 130 }, /^Add 30 guests \(to 130\)$/],
     [{ op: "addGuests", value: -30 }, { guests: 70 }, /^Remove 30 guests \(to 70\)$/],
-    [{ op: "setDate", value: "2027-05-02" }, { date: "2027-05-02" }, /^Move the date to 2027-05-02$/],
+    [{ op: "setDate", value: "2027-05-02" }, { date: "2027-05-02" }, /^Move the date to Sun, 2 May,? 2027$/],
     [{ op: "setStartTime", value: "19:30" }, { startTime: "19:30" }, /^Start at 19:30$/],
     [{ op: "setSetting", value: "either" }, { setting: "either" }, /^Make it indoor or outdoor$/],
     [{ op: "setSetting", value: "outdoor" }, { setting: "outdoor" }, /^Make it outdoor$/],
-    [{ op: "setPriorities", value: ["food", "decor"] }, { priorities: ["food", "decor"] }, /^Prioritise food, decor$/],
+    [
+      { op: "setPriorities", value: ["food", "photography"] },
+      { priorities: ["food", "photography"] },
+      /^Prioritise food, photos$/,
+    ],
     [{ op: "setPriorities", value: [] }, { priorities: [] }, /^Clear priorities$/],
     [{ op: "setPreference", key: "kidsFriendly", value: false }, { preferences: [] }, /^Remove a kids-friendly plan$/],
     [
@@ -110,6 +114,16 @@ describe("toChange (model output)", () => {
     expect(toChange({ op: "setPreference", text: "freeBeer", flag: true })).toBeNull();
     expect(toChange({ op: "setDate", text: "next friday" })).toBeNull();
     expect(toChange({ op: "setPriorities", list: ["food", "food"] })).toBeNull();
+  });
+
+  it("rounds numbers and rejects missing ones", () => {
+    expect(toChange({ op: "addGuests", number: 12.6 })).toEqual({ op: "addGuests", value: 13 });
+    expect(toChange({ op: "setBudget" })).toBeNull();
+  });
+
+  it("offers the model exactly the ops the schema accepts", () => {
+    const schemaOps = ChangeSchema.options.map((o) => o.shape.op.value);
+    expect([...CHANGE_OPS].sort()).toEqual(schemaOps.sort());
   });
 });
 

@@ -75,7 +75,7 @@ export const CHANGE_OPS = [
   "setPreference",
   "setVenueBooked",
   "setStyle",
-] as const;
+] as const satisfies readonly Change["op"][];
 
 export const RawChangeSchema = z.object({
   op: z.enum(CHANGE_OPS),
@@ -103,25 +103,34 @@ export type Change = z.infer<typeof ChangeSchema>;
 
 /** Converts a model-shaped change into a checked one; returns null when it is invalid. */
 export function toChange(raw: RawChange): Change | null {
-  const candidate = (() => {
-    switch (raw.op) {
-      case "scaleBudget":
-        return { op: raw.op, percent: raw.number };
-      case "setPreference":
-        return { op: raw.op, key: raw.text, value: raw.flag };
-      case "setVenueBooked":
-        return { op: raw.op, value: raw.flag };
-      case "setPriorities":
-        return { op: raw.op, value: raw.list };
-      case "setDate":
-      case "setStartTime":
-      case "setSetting":
-      case "setStyle":
-        return { op: raw.op, value: raw.text };
-      default:
-        return { op: raw.op, value: typeof raw.number === "number" ? Math.round(raw.number) : undefined };
-    }
-  })();
-  const parsed = ChangeSchema.safeParse(candidate);
+  const parsed = ChangeSchema.safeParse(toCandidate(raw));
   return parsed.success ? parsed.data : null;
+}
+
+/** Maps the flat fields onto the shape each op expects; ChangeSchema then checks the values. */
+function toCandidate(raw: RawChange): unknown {
+  switch (raw.op) {
+    case "setBudget":
+    case "setGuests":
+    case "addGuests":
+      return { op: raw.op, value: raw.number === undefined ? undefined : Math.round(raw.number) };
+    case "scaleBudget":
+      return { op: raw.op, percent: raw.number };
+    case "setPreference":
+      return { op: raw.op, key: raw.text, value: raw.flag };
+    case "setVenueBooked":
+      return { op: raw.op, value: raw.flag };
+    case "setPriorities":
+      return { op: raw.op, value: raw.list };
+    case "setDate":
+    case "setStartTime":
+    case "setSetting":
+    case "setStyle":
+      return { op: raw.op, value: raw.text };
+    default: {
+      // Adding an op to CHANGE_OPS without a case here is a compile error.
+      const unhandled: never = raw.op;
+      return unhandled;
+    }
+  }
 }

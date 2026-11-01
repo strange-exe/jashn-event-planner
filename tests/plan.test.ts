@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { addDays, addMinutes, daysBetween, isValidDate } from "@/lib/engine/dates";
-import { formatCompactINR, parseAmount } from "@/lib/engine/money";
+import { formatINR, formatNumber, parseAmount } from "@/lib/engine/money";
 import { buildPlan } from "@/lib/engine/plan";
 import { buildTasks } from "@/lib/engine/timeline";
 import { formatDate } from "@/lib/labels";
@@ -102,6 +102,27 @@ describe("buildPlan", () => {
     expect(ids(plan.insights)).not.toContain("compressed");
   });
 
+  it("treats a past event as a record, not a rush", () => {
+    const plan = buildPlan(makeInput({ date: addDays(TODAY, -3) }), TODAY);
+    expect(plan.daysToGo).toBe(-3);
+    expect(ids(plan.insights)).toContain("past");
+    expect(ids(plan.insights)).not.toContain("rush");
+  });
+
+  it("writes event and priority names in its explanations, never raw ids", () => {
+    const plan = buildPlan(
+      makeInput({ type: "community", priorities: ["photography"], date: addDays(TODAY, 2), budget: 20_000 }),
+      TODAY,
+    );
+    const text = [
+      ...plan.insights.flatMap((i) => [i.title, i.detail]),
+      ...plan.budget.lines.flatMap((l) => l.reasons),
+    ].join(" ");
+    expect(text).toContain("community event");
+    expect(text).toContain("You ranked photos");
+    expect(text).not.toMatch(/communitys|a community[^ ]| photography as/);
+  });
+
   it("sorts insights by severity", () => {
     const order = { critical: 0, warning: 1, info: 2 };
     const plan = buildPlan(
@@ -123,11 +144,9 @@ describe("helpers", () => {
     expect(parseAmount("no amount")).toBeNull();
   });
 
-  it("formats compact rupees", () => {
-    expect(formatCompactINR(440_000)).toMatch(/4\.4 L$/);
-    expect(formatCompactINR(12_000_000)).toMatch(/1\.2 Cr$/);
-    expect(formatCompactINR(85_000)).toMatch(/85 K$/);
-    expect(formatCompactINR(900)).toMatch(/900$/);
+  it("formats rupees with Indian digit grouping, rounded to whole rupees", () => {
+    expect(formatINR(450_000.4)).toMatch(/4,50,000$/);
+    expect(formatNumber(1_234_567)).toBe("12,34,567");
   });
 
   it("formats dates the same in every time zone", () => {

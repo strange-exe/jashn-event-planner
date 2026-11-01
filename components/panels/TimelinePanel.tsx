@@ -3,17 +3,14 @@
 import type { Phase } from "@/lib/engine/types";
 import { PHASE_LABEL } from "@/lib/labels";
 import styles from "../dashboard.module.css";
-import { TaskCheck, type PanelProps } from "./shared";
+import { Card, TaskCheck, type PanelProps } from "./shared";
 
 const PHASES: Phase[] = ["foundation", "bookings", "details", "final-week", "day-of"];
 
 export function TimelinePanel({ plan, saved }: PanelProps) {
   return (
     <div className={styles.panelGrid}>
-      <section className="card stack" aria-labelledby="tl-h">
-        <h2 id="tl-h" className={styles.h}>
-          Timeline
-        </h2>
+      <Card title="Timeline">
         {plan.tasks.some((t) => t.compressed) && (
           <p className="hint">
             Tasks marked &ldquo;Pulled forward&rdquo; would normally happen earlier; there is less time than ideal, so
@@ -34,11 +31,8 @@ export function TimelinePanel({ plan, saved }: PanelProps) {
             </div>
           );
         })}
-      </section>
-      <section className="card stack" aria-labelledby="rs-h">
-        <h2 id="rs-h" className={styles.h}>
-          On the day
-        </h2>
+      </Card>
+      <Card title="On the day">
         <ol className={styles.runSheet}>
           {plan.runSheet.map((s) => (
             <li key={s.time + s.title}>
@@ -52,7 +46,7 @@ export function TimelinePanel({ plan, saved }: PanelProps) {
             </li>
           ))}
         </ol>
-      </section>
+      </Card>
     </div>
   );
 }

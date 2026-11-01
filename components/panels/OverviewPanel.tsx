@@ -2,9 +2,9 @@
 
 import { formatNumber } from "@/lib/engine/money";
 import styles from "../dashboard.module.css";
-import { Icon } from "../Icon";
+import { StatusBadge } from "../feedback";
 import { SeverityBadge } from "../SeverityBadge";
-import { TaskCheck, type PanelProps } from "./shared";
+import { Card, TaskCheck, type PanelProps } from "./shared";
 
 const NEXT_UP_COUNT = 5;
 
@@ -12,16 +12,12 @@ export function OverviewPanel({ plan, saved }: PanelProps) {
   const open = plan.tasks.filter((t) => !saved.done[t.id]).slice(0, NEXT_UP_COUNT);
   return (
     <div className={styles.panelGrid}>
-      <section className="card stack" aria-labelledby="flags-h">
-        <h2 id="flags-h" className={styles.h}>
-          What needs attention
-        </h2>
+      <Card title="What needs attention">
         {plan.insights.length === 0 ? (
           <p className="row">
-            <span className="badge tone-success">
-              <Icon name="check" />
+            <StatusBadge tone="success" icon="check">
               On track
-            </span>{" "}
+            </StatusBadge>{" "}
             Nothing to flag. Keep working through the timeline.
           </p>
         ) : (
@@ -41,12 +37,9 @@ export function OverviewPanel({ plan, saved }: PanelProps) {
             ))}
           </ul>
         )}
-      </section>
+      </Card>
 
-      <section className="card stack" aria-labelledby="next-h">
-        <h2 id="next-h" className={styles.h}>
-          Next up
-        </h2>
+      <Card title="Next up">
         {open.length ? (
           <ul className={styles.list}>
             {open.map((t) => (
@@ -56,12 +49,9 @@ export function OverviewPanel({ plan, saved }: PanelProps) {
         ) : (
           <p className="muted">Every task is done. Enjoy the celebration.</p>
         )}
-      </section>
+      </Card>
 
-      <section className="card stack" aria-labelledby="log-h">
-        <h2 id="log-h" className={styles.h}>
-          Quantities to plan for
-        </h2>
+      <Card title="Quantities to plan for">
         <table className={styles.table}>
           <caption className="sr-only">Quantities based on {plan.input.guests} guests</caption>
           <thead>
@@ -85,7 +75,7 @@ export function OverviewPanel({ plan, saved }: PanelProps) {
             ))}
           </tbody>
         </table>
-      </section>
+      </Card>
     </div>
   );
 }

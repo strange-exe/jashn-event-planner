@@ -1,3 +1,4 @@
+import { eventNoun, PRIORITY_LABEL } from "../labels";
 import type { Budget, BudgetCategory, BudgetLine, EventInput, EventType, Priority } from "./types";
 
 // Starting shares (percent of the total) for each kind of event. They are planning
@@ -105,7 +106,7 @@ function budgetWeights(input: EventInput): Weights {
   const w: Weights = { shares: new Map(), reasons: new Map() };
   for (const [cat, share] of Object.entries(BASE_SHARES[input.type]) as [BudgetCategory, number][]) {
     w.shares.set(cat, share);
-    note(w, cat, `Typical starting share for a ${input.type}: ${share}%.`);
+    note(w, cat, `Typical starting share for ${eventNoun(input.type)} budgets: ${share}%.`);
   }
 
   if (input.venueBooked) {
@@ -132,7 +133,8 @@ function budgetWeights(input: EventInput): Weights {
     note(
       w,
       cat,
-      `You ranked ${p} as your ${boost.rank} priority: share raised ${Math.round((boost.factor - 1) * 100)}%.`,
+      `You ranked ${PRIORITY_LABEL[p].toLowerCase()} as your ${boost.rank} priority: ` +
+        `share raised ${Math.round((boost.factor - 1) * 100)}%.`,
     );
   });
 
@@ -204,7 +206,9 @@ export function buildBudget(input: EventInput, locks: Locks = {}): Budget {
         : (w.reasons.get(category) ?? []),
     };
   });
-  lines.sort((a, b) => (a.category === "contingency" ? 1 : b.category === "contingency" ? -1 : b.amount - a.amount));
+  // Largest line first, with contingency always last.
+  const isContingency = (l: BudgetLine) => Number(l.category === "contingency");
+  lines.sort((a, b) => isContingency(a) - isContingency(b) || b.amount - a.amount);
 
   return {
     total,

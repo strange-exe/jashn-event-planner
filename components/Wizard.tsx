@@ -8,7 +8,9 @@ import type { EventInput } from "@/lib/engine/types";
 import { sampleWedding } from "@/lib/sample";
 import { EventInputSchema } from "@/lib/schema";
 import { createPlan, updatePlan, usePlans } from "@/lib/store";
+import { ErrorAlert } from "./feedback";
 import { Icon } from "./Icon";
+import { PlanMissing } from "./PlanMissing";
 import styles from "./wizard.module.css";
 import { GuestsBudgetStep, OccasionStep, WhenWhereStep, type StepProps } from "./WizardSteps";
 
@@ -31,14 +33,18 @@ export function Wizard({ sample, editId }: WizardProps) {
   const firstRender = useRef(true);
   const uid = useId();
 
-  // "Try a sample wedding" goes straight to a ready plan.
+  // "Try a sample wedding" goes straight to a ready plan. The ref stops a second
+  // sample being saved when React runs effects twice in development.
+  const sampleCreated = useRef(false);
   useEffect(() => {
-    if (!sample) return;
+    if (!sample || sampleCreated.current) return;
+    sampleCreated.current = true;
     const plan = createPlan(sampleWedding(today));
     router.replace(`/plans/${plan.id}`);
   }, [sample, today, router]);
 
-  // Editing: fill the form once the saved plan has loaded from storage.
+  // Editing: fill the form once the saved plan has loaded from storage. Setting state
+  // during render (once, guarded by loadedEdit) avoids a flash of the empty form.
   const editing = editId ? plans?.find((p) => p.id === editId) : undefined;
   if (editing && !loadedEdit) {
     setLoadedEdit(true);
@@ -90,6 +96,8 @@ export function Wizard({ sample, editId }: WizardProps) {
       </p>
     );
   }
+  // An edit link for a plan this browser does not have: say so rather than start a new plan.
+  if (editId && plans !== null && !editing) return <PlanMissing />;
 
   const StepView = STEP_VIEWS[step] ?? OccasionStep;
   const stepProps: StepProps = {
@@ -130,11 +138,10 @@ export function Wizard({ sample, editId }: WizardProps) {
         <StepView {...stepProps} />
 
         {showErrors && stepErrors.length > 0 && (
-          <p className="error" role="alert">
-            <Icon name="stop" /> Fix{" "}
-            {stepErrors.length === 1 ? "the highlighted field" : `the ${stepErrors.length} highlighted fields`} to
+          <ErrorAlert>
+            Fix {stepErrors.length === 1 ? "the highlighted field" : `the ${stepErrors.length} highlighted fields`} to
             continue.
-          </p>
+          </ErrorAlert>
         )}
 
         <div className={`row spread ${styles.actions}`}>

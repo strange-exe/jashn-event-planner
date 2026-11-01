@@ -3,7 +3,6 @@
 
 const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
 const plain = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 });
-const RUPEE = String.fromCodePoint(0x20b9);
 
 export function formatINR(amount: number): string {
   return inr.format(Math.round(amount));
@@ -11,16 +10,6 @@ export function formatINR(amount: number): string {
 
 export function formatNumber(n: number): string {
   return plain.format(Math.round(n));
-}
-
-/** Compact form for tight spaces: 4.4 L, 1.2 Cr, 85 K. */
-export function formatCompactINR(amount: number): string {
-  const a = Math.abs(amount);
-  const trim = (n: number) => String(Number(n.toFixed(n >= 10 ? 0 : 1)));
-  if (a >= 1e7) return `${RUPEE}${trim(amount / 1e7)} Cr`;
-  if (a >= 1e5) return `${RUPEE}${trim(amount / 1e5)} L`;
-  if (a >= 1e3) return `${RUPEE}${trim(amount / 1e3)} K`;
-  return formatINR(amount);
 }
 
 const UNITS: Record<string, number> = {

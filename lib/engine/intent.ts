@@ -1,5 +1,4 @@
-import type { Change } from "../schema";
-import { ChangeSchema } from "../schema";
+import { ChangeSchema, LIMITS, type Change } from "../schema";
 import { parseAmount } from "./money";
 import type { Preference, Priority } from "./types";
 
@@ -76,7 +75,7 @@ export function parseIntent(message: string): Change[] {
       .filter((x) => x.at >= 0)
       .sort((a, b) => a.at - b.at)
       .map((x) => x.p)
-      .slice(0, 3);
+      .slice(0, LIMITS.priorities);
     if (found.length) out.push({ op: "setPriorities", value: found });
   }
 

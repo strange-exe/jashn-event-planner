@@ -1,4 +1,5 @@
 import { addDays, addMinutes } from "./dates";
+import { hasPreference, isPublicEvent, needsAttire } from "./rules";
 import type { EventInput, EventType, Phase, RunSheetItem, Task } from "./types";
 
 // How far ahead tasks happen compared with a wedding (1 = wedding lead times).
@@ -28,9 +29,9 @@ interface TaskTemplate {
 const OUTDOOR_PERMIT_GUESTS = 200;
 
 const needsPermits = (i: EventInput) =>
-  i.type === "community" || i.type === "festival" || (i.setting === "outdoor" && i.guests > OUTDOOR_PERMIT_GUESTS);
+  isPublicEvent(i) || (i.setting === "outdoor" && i.guests > OUTDOOR_PERMIT_GUESTS);
 
-const TEMPLATES: TaskTemplate[] = [
+const TEMPLATES = [
   {
     id: "budget",
     title: "Agree the budget and a first guest list",
@@ -105,7 +106,7 @@ const TEMPLATES: TaskTemplate[] = [
     phase: "details",
     lead: 90,
     min: 5,
-    when: (i) => i.type === "wedding" || i.type === "engagement" || i.priorities.includes("attire"),
+    when: needsAttire,
     why: "Tailoring and alterations usually take several weeks.",
   },
   {
@@ -131,7 +132,7 @@ const TEMPLATES: TaskTemplate[] = [
     phase: "details",
     lead: 45,
     min: 3,
-    when: (i) => i.preferences.includes("stepFreeAccess"),
+    when: (i) => hasPreference(i, "stepFreeAccess"),
     why: "You asked for step-free access, which depends on the venue.",
   },
   {
@@ -140,7 +141,7 @@ const TEMPLATES: TaskTemplate[] = [
     phase: "details",
     lead: 30,
     min: 3,
-    when: (i) => i.preferences.includes("ecoFriendly"),
+    when: (i) => hasPreference(i, "ecoFriendly"),
     why: "You asked for an eco-friendly event.",
   },
   {
@@ -149,7 +150,7 @@ const TEMPLATES: TaskTemplate[] = [
     phase: "details",
     lead: 21,
     min: 2,
-    when: (i) => i.preferences.includes("kidsFriendly"),
+    when: (i) => hasPreference(i, "kidsFriendly"),
     why: "You expect children, who need space and supervision.",
   },
   {
@@ -215,7 +216,10 @@ const TEMPLATES: TaskTemplate[] = [
     fixed: true,
     why: "The plan comes together.",
   },
-];
+] as const satisfies readonly TaskTemplate[];
+
+/** Every task id the timeline can produce; vendors refer to tasks by these ids. */
+export type TaskId = (typeof TEMPLATES)[number]["id"];
 
 function idealLead(t: TaskTemplate, input: EventInput): number {
   if (t.fixed) return t.lead;
@@ -228,7 +232,10 @@ function idealLead(t: TaskTemplate, input: EventInput): number {
  * mapping, so "book the venue" never ends up after "chase RSVPs".
  */
 export function buildTasks(input: EventInput, today: string, daysToGo: number): Task[] {
-  const chosen = TEMPLATES.filter((t) => !t.when || t.when(input)).map((t) => ({ t, lead: idealLead(t, input) }));
+  const chosen = TEMPLATES.filter((t: TaskTemplate) => !t.when || t.when(input)).map((t) => ({
+    t,
+    lead: idealLead(t, input),
+  }));
   const window = Math.max(0, daysToGo);
   const maxLead = Math.max(...chosen.map((c) => c.lead));
   const cut = Math.floor(window / 2);
@@ -241,21 +248,24 @@ export function buildTasks(input: EventInput, today: string, daysToGo: number): 
   };
   const needsSqueeze = maxLead > window;
 
-  return chosen
-    .map(({ t, lead }) => {
-      const scheduled = needsSqueeze ? Math.min(fit(lead), window) : lead;
-      return {
-        id: t.id,
-        title: t.title,
-        phase: t.phase,
-        due: addDays(input.date, -scheduled),
-        idealLeadDays: lead,
-        compressed: scheduled < lead,
-        why: t.why,
-      } satisfies Task;
-    })
-    .sort((a, b) => (a.due < b.due ? -1 : a.due > b.due ? 1 : b.idealLeadDays - a.idealLeadDays))
-    .filter((task) => task.due >= today || task.phase === "day-of");
+  return (
+    chosen
+      .map(({ t, lead }) => {
+        const scheduled = needsSqueeze ? Math.min(fit(lead), window) : lead;
+        return {
+          id: t.id,
+          title: t.title,
+          phase: t.phase,
+          due: addDays(input.date, -scheduled),
+          idealLeadDays: lead,
+          compressed: scheduled < lead,
+          why: t.why,
+        } satisfies Task;
+      })
+      // Earliest first; on the same day, the task that ideally comes earlier goes first.
+      .sort((a, b) => a.due.localeCompare(b.due) || b.idealLeadDays - a.idealLeadDays)
+      .filter((task) => task.due >= today || task.phase === "day-of")
+  );
 }
 
 type Step = [offsetMinutes: number, title: string, detail: string];

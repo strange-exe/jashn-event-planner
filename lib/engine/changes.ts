@@ -1,6 +1,7 @@
+import { formatDate, PRIORITY_LABEL } from "../labels";
 import { LIMITS, type Change } from "../schema";
 import { formatINR } from "./money";
-import type { EventInput } from "./types";
+import type { EventInput, Preference } from "./types";
 
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
 
@@ -39,7 +40,8 @@ export function applyChanges(input: EventInput, changes: Change[]): EventInput {
   }, input);
 }
 
-const PREF_LABEL: Record<string, string> = {
+// Phrased to follow "Add" or "Remove" in a sentence, unlike the form labels in lib/labels.
+const PREF_PHRASE: Record<Preference, string> = {
   vegetarianOnly: "vegetarian-only food",
   alcoholFree: "no alcohol",
   ecoFriendly: "eco-friendly choices",
@@ -53,21 +55,26 @@ export function describeChange(c: Change, input: EventInput): string {
     case "setBudget":
       return `Set the budget to ${formatINR(c.value)}`;
     case "scaleBudget":
-      return `${c.percent < 0 ? "Cut" : "Raise"} the budget by ${Math.abs(c.percent)}% (to ${formatINR(applyChanges(input, [c]).budget)})`;
+      return (
+        `${c.percent < 0 ? "Cut" : "Raise"} the budget by ${Math.abs(c.percent)}% ` +
+        `(to ${formatINR(applyChanges(input, [c]).budget)})`
+      );
     case "setGuests":
       return `Set guests to ${c.value}`;
     case "addGuests":
       return `${c.value < 0 ? "Remove" : "Add"} ${Math.abs(c.value)} guests (to ${applyChanges(input, [c]).guests})`;
     case "setDate":
-      return `Move the date to ${c.value}`;
+      return `Move the date to ${formatDate(c.value)}`;
     case "setStartTime":
       return `Start at ${c.value}`;
     case "setSetting":
       return `Make it ${c.value === "either" ? "indoor or outdoor" : c.value}`;
     case "setPriorities":
-      return c.value.length ? `Prioritise ${c.value.join(", ")}` : "Clear priorities";
+      return c.value.length
+        ? `Prioritise ${c.value.map((p) => PRIORITY_LABEL[p].toLowerCase()).join(", ")}`
+        : "Clear priorities";
     case "setPreference":
-      return `${c.value ? "Add" : "Remove"} ${PREF_LABEL[c.key]}`;
+      return `${c.value ? "Add" : "Remove"} ${PREF_PHRASE[c.key]}`;
     case "setVenueBooked":
       return c.value ? "Mark the venue as already arranged" : "Include finding a venue";
     case "setStyle":

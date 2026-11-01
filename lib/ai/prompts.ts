@@ -79,8 +79,10 @@ export function assistantPrompt(
 
 export const IDEAS_SYSTEM = [
   "You suggest creative, specific, doable ideas for a celebration in India, personalised to the event details.",
-  "Each idea fits the budget per guest, the guest count, the setting and every stated preference (vegetarian, alcohol-free, eco-friendly, step-free access, kids).",
-  "Prefer ideas that are memorable and practical over generic ones like 'hire a DJ'. No vendor names, no prices, no assumptions about religion or customs unless the details mention them.",
+  "Each idea fits the budget per guest, the guest count, the setting and every stated preference " +
+    "(vegetarian, alcohol-free, eco-friendly, step-free access, kids).",
+  "Prefer ideas that are memorable and practical over generic ones like 'hire a DJ'. " +
+    "No vendor names, no prices, no assumptions about religion or customs unless the details mention them.",
   DATA_RULE,
 ].join("\n");
 
@@ -89,6 +91,7 @@ export function ideasPrompt(input: EventInput, perGuest: number, category?: stri
     `<event_details>${eventJson(input)}</event_details>`,
     `Budget per guest: about ${formatINR(perGuest)}.`,
     category ? `Only ideas in the category "${category}".` : `Mix categories: ${IDEA_CATEGORIES.join(", ")}.`,
-    'Return 6 ideas as JSON: {"ideas": [{"title","category","description","cost"}]}. Descriptions: one or two sentences, under 40 words.',
+    'Return 6 ideas as JSON: {"ideas": [{"title","category","description","cost"}]}. ' +
+      "Descriptions: one or two sentences, under 40 words.",
   ].join("\n\n");
 }

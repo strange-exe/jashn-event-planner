@@ -1,17 +1,9 @@
+import { EVENT_LABEL, eventNoun, formatDate } from "../labels";
+import { PLATE_COST } from "./costs";
 import { monthOf } from "./dates";
 import { formatINR } from "./money";
-import type { Budget, CityTier, EventInput, EventType, Insight, RunSheetItem, Task } from "./types";
-
-// Rough catering cost per guest in rupees (2026), by event type and city size.
-// These are planning heuristics, not quotes; the UI asks users to check locally.
-export const PLATE_COST: Record<EventType, Record<CityTier, number>> = {
-  wedding: { metro: 1200, large: 850, town: 600 },
-  engagement: { metro: 1000, large: 750, town: 500 },
-  birthday: { metro: 600, large: 450, town: 300 },
-  anniversary: { metro: 900, large: 650, town: 450 },
-  community: { metro: 300, large: 220, town: 150 },
-  festival: { metro: 400, large: 300, town: 200 },
-};
+import { isPublicEvent } from "./rules";
+import type { Budget, EventInput, EventType, Insight, RunSheetItem, Task } from "./types";
 
 /** Days of notice below which an event of this type is a rush. */
 const RUSH_DAYS: Record<EventType, number> = {
@@ -43,6 +35,17 @@ interface Context {
 type Rule = (c: Context) => Insight | null;
 
 const RULES: Rule[] = [
+  ({ input, daysToGo }) =>
+    daysToGo < 0
+      ? {
+          id: "past",
+          severity: "info",
+          title: "This event has taken place",
+          detail: `It was on ${formatDate(input.date)}, so the timeline and booking dates no longer apply.`,
+          suggestion: "Edit the date to plan it again, or keep this plan as a record.",
+        }
+      : null,
+
   ({ budget }) =>
     budget.overBy > 0
       ? {
@@ -65,8 +68,12 @@ const RULES: Rule[] = [
         id: "catering-low",
         severity: "critical",
         title: `Food budget is about ${formatINR(perPlate)} per guest`,
-        detail: `A typical ${input.type} in a ${input.cityTier === "town" ? "town" : `${input.cityTier} city`} costs around ${formatINR(typical)} per guest for food.`,
-        suggestion: `Trim the guest list to about ${Math.floor(catering / (typical * CATERING_TIGHT_RATIO))}, choose a simpler menu, or raise the budget.`,
+        detail:
+          `A typical ${eventNoun(input.type)} in a ${input.cityTier === "town" ? "town" : `${input.cityTier} city`} ` +
+          `costs around ${formatINR(typical)} per guest for food.`,
+        suggestion:
+          `Trim the guest list to about ${Math.floor(catering / (typical * CATERING_TIGHT_RATIO))}, ` +
+          "choose a simpler menu, or raise the budget.",
       };
     }
     if (ratio < CATERING_TIGHT_RATIO) {
@@ -81,16 +88,18 @@ const RULES: Rule[] = [
     return null;
   },
 
-  ({ input, daysToGo }) =>
-    daysToGo < RUSH_DAYS[input.type]
+  ({ input, daysToGo }) => {
+    const notice = RUSH_DAYS[input.type];
+    return daysToGo >= 0 && daysToGo < notice
       ? {
           id: "rush",
           severity: "critical",
           title: `Only ${daysToGo} day${daysToGo === 1 ? "" : "s"} to go`,
-          detail: `Most ${input.type}s are planned with at least ${RUSH_DAYS[input.type]} days of notice.`,
+          detail: `${EVENT_LABEL[input.type].name} plans usually allow at least ${notice} days of notice.`,
           suggestion: "Book the venue and caterer today; pick vendors who offer packages.",
         }
-      : null,
+      : null;
+  },
 
   ({ tasks, daysToGo, input }) => {
     const squeezed = tasks.filter((t) => t.compressed).length;
@@ -128,14 +137,15 @@ const RULES: Rule[] = [
 
   ({ input, runSheet }) => {
     const late = runSheet.some((s) => s.time >= "22:00" || s.time < "06:00");
-    const loud = input.type === "community" || input.type === "festival" || input.priorities.includes("entertainment");
+    const loud = isPublicEvent(input) || input.priorities.includes("entertainment");
     if (!late || !loud) return null;
     return {
       id: "noise",
       severity: "warning",
       title: "Music may run past 10 pm",
       detail:
-        "India's Noise Pollution Rules, 2000 restrict loudspeakers between 10 pm and 6 am unless local authorities allow it.",
+        "India's Noise Pollution Rules, 2000 restrict loudspeakers between 10 pm and 6 am " +
+        "unless local authorities allow it.",
       suggestion: "Start earlier, move loud music before 10 pm, or check the local permission.",
     };
   },

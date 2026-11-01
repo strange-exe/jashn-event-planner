@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "My plans" };
 
 export default function PlansPage() {
   return (
-    <div className="container stack" style={{ paddingTop: "var(--space-6)", gap: "var(--space-5)" }}>
+    <div className="container stack page-list">
       <div className="row spread">
         <h1>My plans</h1>
         <Link className="btn btn-primary" href="/plan/new">

@@ -4,8 +4,7 @@ import type { GenerateClient } from "@/lib/ai/gemini";
 import { generateJson } from "@/lib/ai/gemini";
 import { AssistantRequestSchema, handleAssistant, handleIdeas, IdeasRequestSchema } from "@/lib/ai/handlers";
 import { AssistantReplySchema } from "@/lib/ai/prompts";
-import { jsonRoute } from "@/lib/ai/route";
-import { createRateLimiter, readJson } from "@/lib/http";
+import { createRateLimiter, jsonRoute, readJson } from "@/lib/http";
 import { makeInput, TODAY } from "./fixtures";
 
 type Req = Parameters<GenerateClient["models"]["generateContent"]>[0];

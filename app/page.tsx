@@ -23,6 +23,10 @@ const STEPS = [
   },
 ];
 
+// No single budget line is much over 40% of the total, so the preview bars are
+// stretched 2.5x to use the card's width; they are relative, not to scale.
+const BAR_SCALE = 2.5;
+
 export default function Home() {
   const plan = buildPlan(sampleWedding(todayIn()), todayIn());
   const top = plan.budget.lines.slice(0, 4);
@@ -64,7 +68,7 @@ export default function Home() {
                 <dt>{CATEGORY_LABEL[l.category]}</dt>
                 <dd className="num">{formatINR(l.amount)}</dd>
                 <div className="bar" aria-hidden="true">
-                  <span style={{ width: `${Math.min(100, l.percent * 2.5)}%` }} />
+                  <span style={{ width: `${Math.min(100, l.percent * BAR_SCALE)}%` }} />
                 </div>
               </div>
             ))}

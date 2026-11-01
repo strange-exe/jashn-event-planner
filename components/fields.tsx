@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { FieldError } from "./feedback";
 import { Icon } from "./Icon";
 
 interface TextFieldProps {
@@ -39,12 +40,7 @@ export function TextField({ id, label, value, onChange, hint, error, multiline, 
       ) : (
         <input {...common} {...rest} type={rest.type ?? "text"} onChange={(e) => onChange(e.target.value)} />
       )}
-      {error && (
-        <span id={`${id}-error`} className="error">
-          <Icon name="stop" />
-          {error}
-        </span>
-      )}
+      {error && <FieldError id={`${id}-error`}>{error}</FieldError>}
     </div>
   );
 }

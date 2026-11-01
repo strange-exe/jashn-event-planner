@@ -95,7 +95,7 @@ npm run dev                  # http://localhost:3000
 ## Tests
 
 ```bash
-npm test            # 112 unit tests: budget maths, timeline squeeze, vendors, flags, intent parser, every assistant change, validation, saved-plan storage, wizard drafts, API client and route guards, AI fallbacks with a fake model, rate limiting, .ics
+npm test            # 116 unit tests: budget maths, timeline squeeze, vendors, flags, intent parser, every assistant change, validation, saved-plan storage, wizard drafts, API client and route guards, AI fallbacks with a fake model, rate limiting, .ics
 npm run test:coverage  # the same with coverage of lib/ (about 95% of lines; CI fails below 90%)
 npm run test:e2e    # Playwright (production build): flows, axe in light/dark at 390 and 1440 px, CSP and API hardening, XSS payloads (Chromium, Firefox, WebKit)
 npm run lint        # ESLint, zero warnings

@@ -56,7 +56,8 @@ function messageFor(key: keyof EventInput, zodMessage: string): string {
     return `Enter between ${LIMITS.guests.min} and ${LIMITS.guests.max.toLocaleString("en-IN")} guests.`;
   }
   if (key === "budget") {
-    return `Enter a budget between ${formatINR(LIMITS.budget.min)} and ${formatINR(LIMITS.budget.max)}, for example 3 lakh.`;
+    const { min, max } = LIMITS.budget;
+    return `Enter a budget between ${formatINR(min)} and ${formatINR(max)}, for example 3 lakh.`;
   }
   return zodMessage.startsWith("Too big") ? "That is too long." : zodMessage;
 }

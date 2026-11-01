@@ -4,27 +4,26 @@ import type { Vendor } from "@/lib/engine/types";
 import { formatDate } from "@/lib/labels";
 import type { SavedPlan } from "@/lib/store";
 import styles from "../dashboard.module.css";
-import { Icon } from "../Icon";
-import { toggle, type PanelProps } from "./shared";
+import { StatusBadge } from "../feedback";
+import { Card, toggle, type PanelProps } from "./shared";
 
 export function VendorsPanel({ plan, saved }: PanelProps) {
   const bookedCount = plan.vendors.filter((v) => saved.booked[v.id]).length;
   return (
-    <section className="card stack" aria-labelledby="v-h">
-      <div className="card-title">
-        <h2 id="v-h" className={styles.h}>
-          Vendor checklist
-        </h2>
+    <Card
+      title="Vendor checklist"
+      aside={
         <span className="muted">
           {bookedCount} of {plan.vendors.length} booked
         </span>
-      </div>
+      }
+    >
       <ul className={styles.list}>
         {plan.vendors.map((v) => (
           <VendorItem key={v.id} vendor={v} saved={saved} today={plan.today} />
         ))}
       </ul>
-    </section>
+    </Card>
   );
 }
 
@@ -44,18 +43,16 @@ function VendorItem({ vendor, saved, today }: { vendor: Vendor; saved: SavedPlan
         </label>
         <span className="hint num">
           {booked ? (
-            <span className="badge tone-success">
-              <Icon name="check" />
+            <StatusBadge tone="success" icon="check">
               Booked
-            </span>
+            </StatusBadge>
           ) : (
             <>Book by {formatDate(vendor.bookBy)}</>
           )}
           {late && (
-            <span className="badge tone-critical">
-              <Icon name="stop" />
+            <StatusBadge tone="critical" icon="stop">
               Late
-            </span>
+            </StatusBadge>
           )}
         </span>
       </div>

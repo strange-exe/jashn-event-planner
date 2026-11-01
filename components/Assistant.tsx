@@ -8,6 +8,7 @@ import type { EventInput } from "@/lib/engine/types";
 import { LIMITS } from "@/lib/schema";
 import { updatePlan, type ChatMessage, type SavedPlan } from "@/lib/store";
 import styles from "./dashboard.module.css";
+import { ErrorAlert } from "./feedback";
 import { Icon } from "./Icon";
 
 const SUGGESTIONS = ["Cut the budget by 10%", "Add 25 guests", "Make it eco-friendly", "What should I book first?"];
@@ -130,12 +131,7 @@ export function Assistant({ saved, onApplied }: AssistantProps) {
           {notice}
         </p>
       )}
-      {error && (
-        <p className="error" role="alert">
-          <Icon name="stop" />
-          {error}
-        </p>
-      )}
+      {error && <ErrorAlert>{error}</ErrorAlert>}
 
       <div className={styles.suggest}>
         {SUGGESTIONS.map((s) => (

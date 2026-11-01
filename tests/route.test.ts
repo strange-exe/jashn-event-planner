@@ -7,7 +7,7 @@ const Body = z.object({ name: z.string().min(1) });
 async function makeRoute(handle: (body: z.infer<typeof Body>) => Promise<unknown> = async (b) => ({ hello: b.name })) {
   vi.resetModules();
   vi.stubEnv("RATE_LIMIT_PER_MINUTE", "2");
-  const { jsonRoute } = await import("@/lib/ai/route");
+  const { jsonRoute } = await import("@/lib/http");
   return jsonRoute(Body, handle);
 }
 

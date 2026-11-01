@@ -19,6 +19,9 @@ export const EVENT_LABEL: Record<EventType, { name: string; hint: string }> = {
   festival: { name: "Festival gathering", hint: "Diwali, Holi, Eid, Christmas and more" },
 };
 
+/** Lower-case event name for use inside a sentence, e.g. "community event". */
+export const eventNoun = (type: EventType) => EVENT_LABEL[type].name.toLowerCase();
+
 export const TIER_LABEL: Record<CityTier, { name: string; hint: string }> = {
   metro: { name: "Metro", hint: "Delhi, Mumbai, Bengaluru and similar" },
   large: { name: "Large city", hint: "Dehradun, Jaipur, Lucknow and similar" },

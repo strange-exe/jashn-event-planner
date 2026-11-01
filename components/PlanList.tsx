@@ -9,12 +9,13 @@ import styles from "./dashboard.module.css";
 
 export function PlanList() {
   const plans = usePlans();
-  if (plans === null)
+  if (plans === null) {
     return (
       <p className="muted" role="status">
         Loading your plans.
       </p>
     );
+  }
   if (plans.length === 0) {
     return (
       <div className={`card stack ${styles.emptyCard}`}>
@@ -34,7 +35,7 @@ export function PlanList() {
   }
   const sorted = [...plans].sort((a, b) => a.input.date.localeCompare(b.input.date));
   return (
-    <ul className={styles.ideas}>
+    <ul className={styles.cardGrid}>
       {sorted.map((p) => (
         <li key={p.id} className="card stack stack-tight">
           <span className="hint">{EVENT_LABEL[p.input.type].name}</span>

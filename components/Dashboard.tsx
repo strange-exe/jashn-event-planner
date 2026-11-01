@@ -14,6 +14,7 @@ import { Assistant } from "./Assistant";
 import styles from "./dashboard.module.css";
 import { Icon } from "./Icon";
 import { BudgetPanel, IdeasPanel, OverviewPanel, TimelinePanel, VendorsPanel } from "./panels";
+import { PlanMissing } from "./PlanMissing";
 import { Tabs } from "./Tabs";
 
 export function Dashboard({ id }: { id: string }) {
@@ -32,26 +33,8 @@ export function Dashboard({ id }: { id: string }) {
   return <PlanView saved={saved} plan={plan} />;
 }
 
-function PlanMissing() {
-  return (
-    <div className={`card stack ${styles.missing}`}>
-      <h1>Plan not found</h1>
-      <p className="muted">
-        Plans are saved in the browser where they were made. It may have been deleted, or made on another device.
-      </p>
-      <div className="row">
-        <Link className="btn btn-primary" href="/plan/new">
-          Start a new plan
-        </Link>
-        <Link className="btn btn-secondary" href="/plans">
-          My plans
-        </Link>
-      </div>
-    </div>
-  );
-}
-
 function countdownText(daysToGo: number): string {
+  if (daysToGo < 0) return `Took place ${-daysToGo} day${daysToGo === -1 ? "" : "s"} ago`;
   if (daysToGo === 0) return "Today";
   if (daysToGo === 1) return "Tomorrow";
   return `${daysToGo} days to go`;

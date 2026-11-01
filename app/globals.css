@@ -192,6 +192,10 @@ main {
   width: 30px;
   height: 30px;
 }
+.brand-mark {
+  display: inline-flex;
+  color: var(--accent);
+}
 .nav {
   display: flex;
   gap: var(--space-2);
@@ -466,6 +470,10 @@ fieldset {
 .page-narrow {
   padding-top: var(--space-7);
   max-width: 640px;
+}
+.page-list {
+  padding-top: var(--space-6);
+  gap: var(--space-5);
 }
 .row {
   display: flex;

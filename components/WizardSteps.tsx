@@ -3,7 +3,7 @@
 import { daysBetween } from "@/lib/engine/dates";
 import type { Draft } from "@/lib/draft";
 import { formatINR, parseAmount } from "@/lib/engine/money";
-import { PLATE_COST } from "@/lib/engine/insights";
+import { PLATE_COST } from "@/lib/engine/costs";
 import {
   CITY_TIERS,
   EVENT_TYPES,
@@ -19,6 +19,10 @@ import { LIMITS } from "@/lib/schema";
 import { Choice, RadioGroup, TextField } from "./fields";
 import styles from "./wizard.module.css";
 
+/** Removes the item if present, otherwise appends it, keeping the list's order. */
+const toggleItem = <T,>(list: T[], item: T): T[] =>
+  list.includes(item) ? list.filter((x) => x !== item) : [...list, item];
+
 export interface StepProps {
   draft: Draft;
   set: <K extends keyof Draft>(key: K, value: Draft[K]) => void;
@@ -31,24 +35,13 @@ export interface StepProps {
 export function OccasionStep({ draft, set, err, uid }: StepProps) {
   return (
     <>
-      <fieldset className="field">
-        <legend>What are you celebrating?</legend>
-        <div className="choices">
-          {EVENT_TYPES.map((t) => (
-            <Choice
-              key={t}
-              type="radio"
-              name="type"
-              value={t}
-              checked={draft.type === t}
-              onChange={() => set("type", t)}
-            >
-              {EVENT_LABEL[t].name}
-              <small>{EVENT_LABEL[t].hint}</small>
-            </Choice>
-          ))}
-        </div>
-      </fieldset>
+      <RadioGroup
+        label="What are you celebrating?"
+        name="type"
+        options={EVENT_TYPES.map((t) => ({ value: t, label: EVENT_LABEL[t].name, hint: EVENT_LABEL[t].hint }))}
+        value={draft.type}
+        onChange={(v) => set("type", v)}
+      />
       <TextField
         id={`${uid}-title`}
         label="Name of the event"
@@ -125,17 +118,8 @@ export function GuestsBudgetStep({ draft, set, err, uid }: StepProps) {
   const perGuest = guests > 0 && budget > 0 ? budget / guests : 0;
 
   const togglePriority = (p: Priority) =>
-    set(
-      "priorities",
-      draft.priorities.includes(p)
-        ? draft.priorities.filter((x) => x !== p)
-        : [...draft.priorities, p].slice(0, LIMITS.priorities),
-    );
-  const togglePreference = (p: Preference) =>
-    set(
-      "preferences",
-      draft.preferences.includes(p) ? draft.preferences.filter((x) => x !== p) : [...draft.preferences, p],
-    );
+    set("priorities", toggleItem(draft.priorities, p).slice(0, LIMITS.priorities));
+  const togglePreference = (p: Preference) => set("preferences", toggleItem(draft.preferences, p));
 
   return (
     <>

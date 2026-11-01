@@ -20,22 +20,16 @@ export function Tabs({ tabs, label }: { tabs: TabDef[]; label: string }) {
   const base = useId();
 
   function onKey(e: KeyboardEvent) {
-    const last = tabs.length - 1;
-    const next =
-      e.key === "ArrowRight"
-        ? active === last
-          ? 0
-          : active + 1
-        : e.key === "ArrowLeft"
-          ? active === 0
-            ? last
-            : active - 1
-          : e.key === "Home"
-            ? 0
-            : e.key === "End"
-              ? last
-              : null;
-    if (next === null) return;
+    const count = tabs.length;
+    // Arrow keys wrap around; Home and End jump to the ends.
+    const targets: Record<string, number> = {
+      ArrowRight: (active + 1) % count,
+      ArrowLeft: (active - 1 + count) % count,
+      Home: 0,
+      End: count - 1,
+    };
+    const next = targets[e.key];
+    if (next === undefined) return;
     e.preventDefault();
     setActive(next);
     refs.current[next]?.focus();

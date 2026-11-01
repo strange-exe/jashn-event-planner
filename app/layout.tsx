@@ -17,7 +17,8 @@ const source = Source_Sans_3({
 export const metadata: Metadata = {
   title: { default: "Jashn: plan your celebration", template: "%s | Jashn" },
   description:
-    "Plan weddings, birthdays and community events with a budget that adds up, a dated timeline, a vendor checklist and ideas made for you.",
+    "Plan weddings, birthdays and community events with a budget that adds up, " +
+    "a dated timeline, a vendor checklist and ideas made for you.",
   icons: { icon: [{ url: "/icon.svg", type: "image/svg+xml" }], apple: "/apple-touch-icon.png" },
 };
 
@@ -40,7 +41,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <header className="site-header">
           <div className="container">
             <Link href="/" className="brand" aria-label="Jashn home">
-              <span style={{ color: "var(--accent)", display: "inline-flex" }}>
+              <span className="brand-mark">
                 <Icon name="logo" />
               </span>
               Jashn

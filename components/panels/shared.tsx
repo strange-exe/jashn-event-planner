@@ -1,14 +1,46 @@
 "use client";
 
+import { useId, type ReactNode } from "react";
 import type { Plan, Task } from "@/lib/engine/types";
 import { formatDate } from "@/lib/labels";
 import { updatePlan, type SavedPlan } from "@/lib/store";
 import styles from "../dashboard.module.css";
-import { Icon } from "../Icon";
+import { StatusBadge } from "../feedback";
 
 export interface PanelProps {
   plan: Plan;
   saved: SavedPlan;
+}
+
+interface CardProps {
+  title: ReactNode;
+  /** Short summary shown beside the title, such as a count. */
+  aside?: ReactNode;
+  busy?: boolean;
+  children: ReactNode;
+}
+
+/** A dashboard card: a section named by its own heading. */
+export function Card({ title, aside, busy, children }: CardProps) {
+  const headingId = useId();
+  const heading = (
+    <h2 id={headingId} className={styles.h}>
+      {title}
+    </h2>
+  );
+  return (
+    <section className="card stack" aria-labelledby={headingId} aria-busy={busy}>
+      {aside === undefined ? (
+        heading
+      ) : (
+        <div className="card-title">
+          {heading}
+          {aside}
+        </div>
+      )}
+      {children}
+    </section>
+  );
 }
 
 /** Ticks a task as done or a vendor as booked. */
@@ -34,12 +66,11 @@ export function TaskCheck({ saved, task, today }: TaskCheckProps) {
       <span className={`hint num ${styles.due}`}>
         Due {formatDate(task.due)}
         {overdue && (
-          <span className="badge tone-critical">
-            <Icon name="stop" />
+          <StatusBadge tone="critical" icon="stop">
             Overdue
-          </span>
+          </StatusBadge>
         )}
-        {task.compressed && !done && <span className="badge tone-warning">Pulled forward</span>}
+        {task.compressed && !done && <StatusBadge tone="warning">Pulled forward</StatusBadge>}
       </span>
     </li>
   );

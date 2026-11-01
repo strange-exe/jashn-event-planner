@@ -1,4 +1,6 @@
-// Small helpers for the API routes: bounded JSON bodies and a per-client rate limit.
+// Small helpers for the API routes: bounded JSON bodies, a per-client rate limit, and
+// `jsonRoute`, which puts them together around a validated handler.
+import type { z } from "zod";
 
 export class HttpError extends Error {
   constructor(
@@ -54,4 +56,32 @@ export function createRateLimiter(limit: number, windowMs: number, now: () => nu
 
 export function clientKey(req: Request): string {
   return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || "local";
+}
+
+// Requests per client per minute; the e2e suite raises it because every test shares one IP.
+const limiter = createRateLimiter(Number(process.env.RATE_LIMIT_PER_MINUTE) || 12, 60_000);
+
+/** Wraps a JSON API handler with rate limiting, size limits and validation. */
+export function jsonRoute<S extends z.ZodType>(schema: S, handle: (body: z.infer<S>) => Promise<unknown>) {
+  return async (req: Request): Promise<Response> => {
+    const rate = limiter(clientKey(req));
+    if (!rate.ok) {
+      return json({ error: "Too many requests. Try again in a minute." }, 429, {
+        "Retry-After": String(rate.retryAfter),
+      });
+    }
+    try {
+      const parsed = schema.safeParse(await readJson(req));
+      if (!parsed.success) {
+        const issues = parsed.error.issues.map((i) => ({ path: i.path.join("."), message: i.message }));
+        return json({ error: "Some details are invalid.", issues }, 400);
+      }
+      return json(await handle(parsed.data));
+    } catch (e) {
+      if (e instanceof HttpError) return json({ error: e.message }, e.status);
+      // Log only the message: request bodies can hold personal details.
+      console.error("API error", e instanceof Error ? e.message : "unknown");
+      return json({ error: "Something went wrong. Please try again." }, 500);
+    }
+  };
 }

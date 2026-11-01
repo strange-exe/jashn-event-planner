@@ -6,9 +6,10 @@ import type { BudgetCategory, BudgetLine } from "@/lib/engine/types";
 import { CATEGORY_LABEL } from "@/lib/labels";
 import { updatePlan } from "@/lib/store";
 import styles from "../dashboard.module.css";
+import { FieldError, StatusBadge } from "../feedback";
 import { Icon } from "../Icon";
 import { SeverityBadge } from "../SeverityBadge";
-import type { PanelProps } from "./shared";
+import { Card, type PanelProps } from "./shared";
 
 // A single line may be fixed above the total (the overspend is then reported), but not
 // absurdly so: past twice the total it is almost certainly a typo.
@@ -29,15 +30,14 @@ export function BudgetPanel({ plan, saved }: PanelProps) {
     });
 
   return (
-    <section className="card stack" aria-labelledby="budget-h">
-      <div className="card-title">
-        <h2 id="budget-h" className={styles.h}>
-          Budget split
-        </h2>
+    <Card
+      title="Budget split"
+      aside={
         <span className="muted num">
           {formatINR(budget.total)} total, {formatINR(budget.perGuest)} per guest
         </span>
-      </div>
+      }
+    >
       {budget.overBy > 0 && (
         <p className="row" role="alert">
           <SeverityBadge severity="critical" /> Your fixed lines are {formatINR(budget.overBy)} over the total.
@@ -63,7 +63,7 @@ export function BudgetPanel({ plan, saved }: PanelProps) {
           />
         ))}
       </ul>
-    </section>
+    </Card>
   );
 }
 
@@ -85,10 +85,9 @@ function BudgetLineItem({ line, maxAmount, editing, onEdit, onCancel, onSave, on
         <span className={styles.budgetName}>
           {name}
           {line.locked && (
-            <span className="badge tone-neutral">
-              <Icon name="lock" />
+            <StatusBadge tone="neutral" icon="lock">
               Fixed
-            </span>
+            </StatusBadge>
           )}
         </span>
         <span className="num">
@@ -173,12 +172,7 @@ function AmountForm({ name, initial, maxAmount, onSave, onCancel }: AmountFormPr
       <button className="btn btn-quiet" type="button" onClick={onCancel}>
         Cancel
       </button>
-      {error && (
-        <span id={`${uid}-err`} className="error">
-          <Icon name="stop" />
-          {error}
-        </span>
-      )}
+      {error && <FieldError id={`${uid}-err`}>{error}</FieldError>}
     </form>
   );
 }

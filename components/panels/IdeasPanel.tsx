@@ -7,8 +7,8 @@ import { IDEA_CATEGORY_LABEL } from "@/lib/labels";
 import { LIMITS } from "@/lib/schema";
 import { updatePlan } from "@/lib/store";
 import styles from "../dashboard.module.css";
-import { Icon } from "../Icon";
-import type { PanelProps } from "./shared";
+import { ErrorAlert, StatusBadge } from "../feedback";
+import { Card, type PanelProps } from "./shared";
 
 /** New ideas first, then older ones not repeated by title, capped to what a plan stores. */
 function mergeIdeas(fresh: Idea[], old: Idea[]): Idea[] {
@@ -41,12 +41,7 @@ export function IdeasPanel({ plan, saved }: PanelProps) {
   const buttonLabel = status === "loading" ? "Thinking of ideas..." : saved.ideas.length ? "More ideas" : "Get ideas";
 
   return (
-    <section className="card stack" aria-labelledby="i-h" aria-busy={status === "loading"}>
-      <div className="card-title">
-        <h2 id="i-h" className={styles.h}>
-          Ideas for {plan.input.title}
-        </h2>
-      </div>
+    <Card title={`Ideas for ${plan.input.title}`} busy={status === "loading"}>
       <div className={`row no-print ${styles.ideaControls}`}>
         <div className="field">
           <label htmlFor={`${uid}-cat`}>Focus</label>
@@ -72,20 +67,17 @@ export function IdeasPanel({ plan, saved }: PanelProps) {
         {status === "error" ? "" : source}
       </p>
       {status === "error" && (
-        <p className="error" role="alert">
-          <Icon name="stop" />
-          Could not get ideas right now. Check your connection and try again.
-        </p>
+        <ErrorAlert>Could not get ideas right now. Check your connection and try again.</ErrorAlert>
       )}
       {saved.ideas.length === 0 && status !== "loading" ? (
         <p className="muted">No ideas yet. They use your style, guests, budget and preferences.</p>
       ) : (
-        <ul className={styles.ideas}>
+        <ul className={styles.cardGrid}>
           {saved.ideas.map((i) => (
             <li key={i.title} className={styles.idea}>
               <div className="row spread">
                 <strong>{i.title}</strong>
-                <span className="badge tone-neutral">{i.cost} cost</span>
+                <StatusBadge tone="neutral">{i.cost} cost</StatusBadge>
               </div>
               <p className="muted">{i.description}</p>
               <span className="hint">{IDEA_CATEGORY_LABEL[i.category]}</span>
@@ -93,6 +85,6 @@ export function IdeasPanel({ plan, saved }: PanelProps) {
           ))}
         </ul>
       )}
-    </section>
+    </Card>
   );
 }
