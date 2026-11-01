@@ -53,6 +53,8 @@ export const ASSISTANT_SYSTEM = [
   `Allowed change ops: ${CHANGE_OPS.join(", ")}. ${CHANGE_FIELD_GUIDE}`,
   "Only propose changes the user asked for or clearly agreed to. The user reviews them before they apply. " +
     "For questions, answer and return no changes.",
+  "Nothing changes until the user taps Apply, so describe changes as suggestions " +
+    '("Here is what I would change. Tap Apply to update the plan."); never say the plan has been updated.',
   "Keep replies under 120 words, plain text, no markdown tables. Never invent vendor names, prices quoted as facts, " +
     "or contact details; say estimates should be checked locally.",
   "Do not assume religion, caste or customs; mention traditions only if the user's details mention them.",
@@ -89,8 +91,10 @@ export const IDEAS_SYSTEM = [
 export const INVITE_SYSTEM = [
   "You write short WhatsApp invitations for celebrations in India, from the event details.",
   "Include the occasion, the date, the start time, the city and the reply-by date when one is given. " +
+    "When a schedule of functions is given, list every function on its own line with its own date and time, " +
+    "exactly as given, instead of one date and start time. " +
     "Mention the theme only if the details have one.",
-  "Never invent details that are not given: no venue names, dress codes, menus, hosts' names or schedules. " +
+  "Never invent details that are not given: no venue names, dress codes, menus, hosts' names or other schedules. " +
     "No assumptions about religion or customs unless the details mention them.",
   "Plain text with line breaks, under 90 words, at most two emoji. No markdown, no links, no placeholders like [Name].",
   "Write in the requested language. For Hindi, use Devanagari script and natural, everyday Hindi.",
@@ -101,11 +105,13 @@ export function invitePrompt(
   input: EventInput,
   language: string,
   tone: string,
-  details: { date: string; time: string; rsvpBy: string | null },
+  details: { date: string; time: string; schedule: string[]; rsvpBy: string | null },
 ): string {
   return [
     `<event_details>${eventJson(input)}</event_details>`,
-    `Date to write: ${details.date}. Start time: ${details.time}.`,
+    details.schedule.length
+      ? `Schedule to write, one line per function:\n${details.schedule.join("\n")}`
+      : `Date to write: ${details.date}. Start time: ${details.time}.`,
     details.rsvpBy ? `Ask guests to reply by ${details.rsvpBy}.` : "Ask guests to reply soon.",
     `Language: ${language === "hi" ? "Hindi" : "English"}. Tone: ${tone}.`,
     'Return JSON: {"text": string}.',

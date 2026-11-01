@@ -201,6 +201,49 @@ describe("invites", () => {
     expect(failed.text).toContain("Save the date: Riya and Arjun's wedding.");
   });
 
+  // The live site paired day 1's date with the ceremony's time on a three-day wedding.
+  const multiDay = makeInput({
+    date: "2027-06-29",
+    days: 3,
+    startTime: "18:30",
+    functions: [
+      { kind: "wedding", day: 3, startTime: "18:30" },
+      { kind: "haldi", day: 1, startTime: "10:00" },
+      { kind: "sangeet", day: 2, startTime: "19:00" },
+    ],
+  });
+
+  it("lists each wedding function with its own date and time", () => {
+    for (const tone of ["warm", "formal", "fun"] as const) {
+      const text = fallbackInvite(multiDay, "en", tone, TODAY);
+      expect(text).toMatch(/Haldi: Tuesday, 29 June 2027, 10:00\s?am/i);
+      expect(text).toMatch(/Sangeet: Wednesday, 30 June 2027, 7:00\s?pm/i);
+      expect(text).toMatch(/Wedding ceremony: Thursday, 1 July 2027, 6:30\s?pm/i);
+      expect(text.indexOf("Haldi")).toBeLessThan(text.indexOf("Wedding ceremony"));
+      expect(text).not.toMatch(/29 June 2027, (from )?6:30/i);
+    }
+    const hi = fallbackInvite(multiDay, "hi", "formal", TODAY);
+    expect(hi).toContain("हल्दी");
+    expect(hi).toContain("विवाह समारोह");
+    expect(hi).not.toContain("दिनांक");
+  });
+
+  it("gives the model the schedule instead of one date and start time", async () => {
+    let prompt = "";
+    const client: GenerateClient = {
+      models: {
+        async generateContent(req) {
+          prompt = req.contents;
+          return { text: '{"text":"Join us"}' };
+        },
+      },
+    };
+    const body = InviteRequestSchema.parse({ input: multiDay, language: "en", tone: "warm" });
+    await handleInvite(body, { client, today: TODAY });
+    expect(prompt).toMatch(/Wedding ceremony: Thursday, 1 July 2027, 6:30\s?pm/i);
+    expect(prompt).not.toContain("Start time:");
+  });
+
   it("rejects unknown languages and tones", () => {
     expect(InviteRequestSchema.safeParse({ input: makeInput(), language: "fr", tone: "warm" }).success).toBe(false);
     expect(InviteRequestSchema.safeParse({ input: makeInput(), language: "en", tone: "rude" }).success).toBe(false);

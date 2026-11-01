@@ -73,6 +73,15 @@ describe("handleAssistant", () => {
     expect(res.changes[0]?.label).toMatch(/^Cut the budget by 10%/);
   });
 
+  // The live planner said "I have updated your plan" before the user tapped Apply.
+  it("tells the model its changes are proposals until the user applies them", async () => {
+    const { client, calls } = fakeClient(JSON.stringify({ reply: "Ok", changes: [] }));
+    await handleAssistant(request("trim the budget a bit"), { client, today: TODAY });
+    const system = String(calls[0]?.config.systemInstruction);
+    expect(system).toMatch(/nothing changes until the user taps Apply/i);
+    expect(system).toMatch(/never say the plan (has been|was) (updated|changed)/i);
+  });
+
   it("falls back to the rule parser when the model fails", async () => {
     vi.stubEnv("GEMINI_MODELS", "m1");
     const { client } = fakeClient("not json");

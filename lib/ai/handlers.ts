@@ -11,6 +11,7 @@ import {
   INVITE_TONES,
   inviteDate,
   InviteSchema,
+  inviteSchedule,
   inviteTime,
   rsvpBy,
 } from "../invite";
@@ -221,6 +222,7 @@ export async function handleInvite(body: z.infer<typeof InviteRequestSchema>, o:
         invitePrompt(input, language, tone, {
           date: inviteDate(input.date, language),
           time: inviteTime(input.startTime, language),
+          schedule: inviteSchedule(input, language),
           rsvpBy: by && inviteDate(by, language),
         }),
         o.client,

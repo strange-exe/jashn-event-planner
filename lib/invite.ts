@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { addDays } from "./engine/dates";
-import type { EventInput, EventType } from "./engine/types";
+import { sortFunctions } from "./engine/functions";
+import type { EventInput, EventType, FunctionKind } from "./engine/types";
+import { FUNCTION_LABEL } from "./labels";
 import { LIMITS } from "./schema";
 
 // WhatsApp invitations. Gemini writes them when it can; these templates are the
@@ -58,10 +60,33 @@ export function inviteTime(hhmm: string, lang: InviteLanguage): string {
   return fmt(LOCALE[lang], { hour: "numeric", minute: "2-digit" }).format(new Date(`1970-01-01T${hhmm}:00Z`));
 }
 
+const FUNCTION_NAME_HI: Record<FunctionKind, string> = {
+  haldi: "हल्दी",
+  mehendi: "मेहंदी",
+  sangeet: "संगीत",
+  cocktail: "कॉकटेल पार्टी",
+  wedding: "विवाह समारोह",
+  reception: "रिसेप्शन",
+};
+
+/**
+ * One line per wedding function, each with its own date and time, by day then time.
+ * Empty for a single-function event: its one date and start time say it all.
+ */
+export function inviteSchedule(input: EventInput, lang: InviteLanguage): string[] {
+  if (input.type !== "wedding") return [];
+  return sortFunctions(input.functions).map((f) => {
+    const name = lang === "hi" ? FUNCTION_NAME_HI[f.kind] : FUNCTION_LABEL[f.kind].name;
+    return `${name}: ${inviteDate(addDays(input.date, f.day - 1), lang)}, ${inviteTime(f.startTime, lang)}`;
+  });
+}
+
 interface Parts {
   title: string;
   date: string;
   time: string;
+  /** Replaces the date and time lines when the wedding has functions. */
+  schedule: string[];
   city: string;
   style: string;
   by: string | null;
@@ -69,12 +94,15 @@ interface Parts {
 
 type Template = (p: Parts) => string[];
 
+/** The schedule lines when there is one, otherwise the template's own date and time lines. */
+const when = (p: Parts, single: string[], scheduled = p.schedule) => (p.schedule.length ? scheduled : single);
+
 const TEMPLATES: Record<InviteLanguage, Record<InviteTone, Template>> = {
   en: {
     warm: (p) => [
       `We would love to celebrate ${p.title} with you.`,
       "",
-      `${p.date}, ${p.time}`,
+      ...when(p, [`${p.date}, ${p.time}`]),
       p.city,
       p.style ? `Theme: ${p.style}` : "",
       "",
@@ -83,8 +111,7 @@ const TEMPLATES: Record<InviteLanguage, Record<InviteTone, Template>> = {
     formal: (p) => [
       `You are cordially invited to ${p.title}.`,
       "",
-      `Date: ${p.date}`,
-      `Time: ${p.time}`,
+      ...when(p, [`Date: ${p.date}`, `Time: ${p.time}`]),
       `Place: ${p.city}`,
       p.style ? `Theme: ${p.style}` : "",
       "",
@@ -93,7 +120,7 @@ const TEMPLATES: Record<InviteLanguage, Record<InviteTone, Template>> = {
     fun: (p) => [
       `Save the date: ${p.title}.`,
       "",
-      `${p.date}, from ${p.time}, in ${p.city}.`,
+      ...when(p, [`${p.date}, from ${p.time}, in ${p.city}.`], [...p.schedule, `In ${p.city}.`]),
       p.style ? `The theme is ${p.style}, so dress the part.` : "",
       "Good food, good people and plenty to celebrate.",
       "",
@@ -104,8 +131,7 @@ const TEMPLATES: Record<InviteLanguage, Record<InviteTone, Template>> = {
     warm: (p) => [
       `हमें बहुत खुशी होगी अगर आप ${p.title} में हमारे साथ शामिल हों।`,
       "",
-      `तारीख: ${p.date}`,
-      `समय: ${p.time}`,
+      ...when(p, [`तारीख: ${p.date}`, `समय: ${p.time}`]),
       `स्थान: ${p.city}`,
       p.style ? `थीम: ${p.style}` : "",
       "",
@@ -114,8 +140,7 @@ const TEMPLATES: Record<InviteLanguage, Record<InviteTone, Template>> = {
     formal: (p) => [
       `${p.title} के शुभ अवसर पर आप सपरिवार सादर आमंत्रित हैं।`,
       "",
-      `दिनांक: ${p.date}`,
-      `समय: ${p.time}`,
+      ...when(p, [`दिनांक: ${p.date}`, `समय: ${p.time}`]),
       `स्थान: ${p.city}`,
       p.style ? `थीम: ${p.style}` : "",
       "",
@@ -124,7 +149,7 @@ const TEMPLATES: Record<InviteLanguage, Record<InviteTone, Template>> = {
     fun: (p) => [
       `तारीख नोट कर लीजिए: ${p.title}`,
       "",
-      `${p.date}, ${p.time} से, ${p.city} में।`,
+      ...when(p, [`${p.date}, ${p.time} से, ${p.city} में।`], [...p.schedule, `${p.city} में।`]),
       p.style ? `थीम: ${p.style}` : "",
       "अच्छा खाना, अपने लोग और खूब मस्ती।",
       "",
@@ -139,6 +164,7 @@ export function fallbackInvite(input: EventInput, lang: InviteLanguage, tone: In
     title: input.title,
     date: inviteDate(input.date, lang),
     time: inviteTime(input.startTime, lang),
+    schedule: inviteSchedule(input, lang),
     city: input.city,
     style: input.style,
     by: by && inviteDate(by, lang),
